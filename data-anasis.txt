@@ -1,0 +1,201 @@
+
+
+
+-- 全天大单流入占比
+select big_amount_ratio ,up_down_ratio,count(*) from (
+select t1.*
+,t2.total_mv
+, round(t1.big_amount_flow/t2.total_mv *100, 3) as total_mv_ratio
+-- , round(t1.big_amount_flow/t2.circ_mv *100,3) as circ_mv_ratio 
+, round(t1.all_amount/t2.total_mv *100,3) as all_amount_ratio 
+, round(t1.all_amount/t1.big_amount_flow) as big_amount_ratio
+from (
+select *
+,round(case when instr(大单流入, '万') > 0 then  replace(大单流入, '万', '')   when instr(大单流入, '亿') > 0 then replace(大单流入, '亿', '') * 10000 else 大单流入 / 10000 end , 2) as big_amount_flow 
+,round(case when instr(成交额, '万') > 0 then  replace(成交额, '万', '')   when instr(成交额, '亿') > 0 then replace(成交额, '亿', '') * 10000 else 成交额 / 10000 end, 2) as all_amount
+,round(replace(涨跌幅, '%', '') ) as up_down_ratio
+,LPAD(股票代码,6,'0') as code
+from half_day_fund_flow where dat ='2021052515' # and (股票简称 = '佳力图' or 股票简称 = '诚迈科技')
+) t1
+left join 
+(
+select left(ts_code ,6) as ts_code, trade_date, total_mv, circ_mv  from akshare.daily_basic 
+) t2
+on t1.code  = t2.ts_code
+order by round(t1.big_amount_flow/t2.total_mv *1000, 3) desc
+) t group by big_amount_ratio,up_down_ratio 
+order by big_amount_ratio,up_down_ratio desc,count(*) desc
+
+
+
+
+#业绩整幅
+select *, round(t1.`净利润-同比增长` - t2.`净利润-同比增长` ) as up_ratio  from (
+select 股票代码,股票简称,`净利润-净利润`,`净利润-同比增长` from akshare.yjbb_season where dat = '20210331'
+) t1
+left JOIN 
+(
+select 股票代码,股票简称,`净利润-净利润`,`净利润-同比增长` from akshare.yjbb_season where dat = '20201231'
+) t2
+on t1.股票代码 = t2.股票代码
+where 
+-- (t1.`净利润-同比增长` - t2.`净利润-同比增长`) / t1.`净利润-同比增长` >1
+-- AND 
+-- (t1.`净利润-同比增长` - t2.`净利润-同比增长`) / t1.`净利润-同比增长` < 0
+-- AND 
+t1.`净利润-同比增长` > 50
+and 
+round(t1.`净利润-同比增长` - t2.`净利润-同比增长`) > 100
+order by t1.`净利润-同比增长` - t2.`净利润-同比增长` desc
+
+
+
+-- 创建临时表表示近期业绩情况
+create table tmp.yj_info
+select t1.*,t2.net_income2, t2.net_income_ratio2, round(t1.net_income_ratio - t2.net_income_ratio2, 1) as up_ratio  from (
+select 股票代码 as code,股票简称 as name,round(`净利润-净利润`/10000) as net_income,round(`净利润-同比增长`,1) as net_income_ratio from akshare.yjbb_season where dat = '20210331' 
+) t1
+left JOIN 
+(
+select 股票代码 as code ,股票简称 as name,round(`净利润-净利润`/10000) as net_income2,round(`净利润-同比增长`,1) as net_income_ratio2 from akshare.yjbb_season where dat = '20201231'
+) t2
+on t1.code = t2.code
+
+
+
+
+-- 获取每只股的资金流向信息及近期业绩情况，其他情况呢？
+select 
+-- fw.*, yj.net_income, yj.net_income_ratio, yj.net_income_ratio2, yj.up_ratio 
+*
+from 
+(
+select t1.*
+,t2.total_mv
+, round(t1.big_amount_flow/t2.total_mv *100, 2) as total_mv_ratio
+-- , round(t1.big_amount_flow/t2.circ_mv *100,3) as circ_mv_ratio 
+, round(t1.all_amount/t2.total_mv *100,2) as all_amount_ratio 
+, round(t1.all_amount/t1.big_amount_flow) as big_amount_ratio
+from (
+select *
+,round(case when instr(大单流入, '万') > 0 then  replace(大单流入, '万', '')   when instr(大单流入, '亿') > 0 then replace(大单流入, '亿', '') * 10000 else 大单流入 / 10000 end , 2) as big_amount_flow 
+,round(case when instr(成交额, '万') > 0 then  replace(成交额, '万', '')   when instr(成交额, '亿') > 0 then replace(成交额, '亿', '') * 10000 else 成交额 / 10000 end, 2) as all_amount
+,round(replace(涨跌幅, '%', '') ) as up_down_ratio
+,LPAD(股票代码,6,'0') as code
+from half_day_fund_flow where dat ='2021052715' 
+# and (股票简称 = '佳力图' or 股票简称 = '诚迈科技' or 股票简称 = '震安科技' or 股票简称 = '旗天科技')
+and 股票简称 in ('佳力图', '诚迈科技', '震安科技', '旗天科技', '宋城演艺', '金种子酒')
+) t1
+left join 
+(
+select left(ts_code ,6) as ts_code, trade_date, round(total_mv) as total_mv, round(circ_mv) as circ_mv  from akshare.daily_basic 
+) t2
+on t1.code  = t2.ts_code
+order by round(t1.big_amount_flow/t2.total_mv *1000, 3) desc
+) fw   -- 获取每只股的资金流向信息
+left join
+tmp.yj_info yj
+on fw.code = yj.code
+
+
+
+
+
+
+
+
+-- 
+select 
+-- fw.*, yj.net_income, yj.net_income_ratio, yj.net_income_ratio2, yj.up_ratio 
+*
+from 
+(
+select t1.*
+,t2.total_mv
+, round(t1.big_amount_flow/t2.total_mv *100, 2) as total_mv_ratio
+-- , round(t1.big_amount_flow/t2.circ_mv *100,3) as circ_mv_ratio 
+, round(t1.all_amount/t2.total_mv *100,2) as all_amount_ratio 
+, round(t1.all_amount/t1.big_amount_flow) as big_amount_ratio
+from (
+select *
+,round(case when instr(大单流入, '万') > 0 then  replace(大单流入, '万', '')   when instr(大单流入, '亿') > 0 then replace(大单流入, '亿', '') * 10000 else 大单流入 / 10000 end , 2) as big_amount_flow 
+,round(case when instr(成交额, '万') > 0 then  replace(成交额, '万', '')   when instr(成交额, '亿') > 0 then replace(成交额, '亿', '') * 10000 else 成交额 / 10000 end, 2) as all_amount
+,round(replace(涨跌幅, '%', '') ) as up_down_ratio
+,LPAD(股票代码,6,'0') as code
+from half_day_fund_flow where dat ='2021052715' 
+# and (股票简称 = '佳力图' or 股票简称 = '诚迈科技' or 股票简称 = '震安科技' or 股票简称 = '旗天科技')
+-- and 股票简称 in ('佳力图', '诚迈科技', '震安科技', '旗天科技', '宋城演艺', '金种子酒')
+) t1
+left join 
+(
+select left(ts_code ,6) as ts_code, trade_date, round(total_mv) as total_mv, round(circ_mv) as circ_mv  from akshare.daily_basic 
+) t2
+on t1.code  = t2.ts_code
+order by round(t1.big_amount_flow/t2.total_mv *1000, 3) desc
+) fw   -- 获取每只股的资金流向信息
+left join
+tmp.yj_info yj
+on fw.code = yj.code
+order by up_down_ratio desc 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
