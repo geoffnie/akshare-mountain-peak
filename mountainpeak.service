@@ -1,0 +1,13 @@
+[Unit]
+Description=mountainpeak
+
+[Service]
+Environment="PATH=/kkb/install/miniconda3/bin:/kkb/install/miniconda3/condabin:/kkb/install/sqoop-1.4.6-cdh5.14.2/bin:/kkb/install/hadoop-2.6.0-cdh5.14.2/bin:/kkb/install/hadoop-2.6.0-cdh5.14.2/sbin:/kkb/install/jdk1.8.0_141/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/kkb/install/hive-1.1.0-cdh5.14.2/bin:/kkb/install/zookeeper-3.4.5-cdh5.14.2/bin:/kkb/install/hbase-1.2.0-cdh5.14.2/bin:/root/bin"
+WorkingDirectory=/home/akshare-mountain-peak
+ExecStart=/usr/bin/env python3 mountain-peak.py 
+Restart=on-failure
+StartLimitInterval=1min
+
+[Install]
+WantedBy=multi-user.target
+

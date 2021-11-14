@@ -1,0 +1,135 @@
+08/19/2021 18:52:56 PM - INFO - 2021-08-19 18:52:56 truncate table akshare.average_line_day
+08/19/2021 19:14:17 PM - ERROR - 2021-08-19 19:14:17 出错啦！！！！！single positional indexer is out-of-bounds
+08/19/2021 19:17:05 PM - ERROR - 2021-08-19 19:17:05 出错啦！！！！！single positional indexer is out-of-bounds
+08/23/2021 09:02:13 AM - ERROR - 2021-08-23 09:02:13 执行批量平均线任务失败
+08/23/2021 09:02:40 AM - ERROR - 2021-08-23 09:02:40 执行批量平均线任务失败
+08/23/2021 09:02:40 AM - INFO - time_elapsed_all : 0
+08/23/2021 09:03:32 AM - ERROR - 2021-08-23 09:03:32 执行批量平均线任务失败
+08/23/2021 09:03:32 AM - INFO - time_elapsed_all : 0
+08/23/2021 09:03:57 AM - INFO - 2021-08-23 09:03:57 truncate table akshare.average_line_day
+08/23/2021 09:15:54 AM - ERROR - 2021-08-23 09:15:54 出错啦！！！！！single positional indexer is out-of-bounds
+08/23/2021 09:19:16 AM - INFO - time_elapsed_all : 919
+08/23/2021 17:24:31 PM - ERROR - 2021-08-23 17:24:31 执行批量平均线任务失败
+08/23/2021 17:24:31 PM - INFO - time_elapsed_all : 0
+08/23/2021 17:25:15 PM - ERROR - 2021-08-23 17:25:15 执行批量平均线任务失败
+08/23/2021 17:25:15 PM - INFO - time_elapsed_all : 0
+08/23/2021 17:26:13 PM - ERROR - 2021-08-23 17:26:13 执行批量平均线任务失败
+08/23/2021 17:26:13 PM - INFO - time_elapsed_all : 0
+08/23/2021 17:26:22 PM - INFO - 2021-08-23 17:26:22 truncate table akshare.average_line_day
+08/23/2021 17:49:11 PM - INFO - time_elapsed_all : 1368
+08/24/2021 17:23:17 PM - INFO - 2021-08-24 17:23:17 truncate table akshare.average_line_day
+08/24/2021 18:00:42 PM - INFO - time_elapsed_all : 2244
+08/25/2021 17:34:11 PM - INFO - 2021-08-25 17:34:11 truncate table akshare.average_line_day
+08/25/2021 18:02:32 PM - ERROR - 2021-08-25 18:02:32 出错啦！！！！！single positional indexer is out-of-bounds
+08/25/2021 18:02:37 PM - INFO - time_elapsed_all : 1706
+08/26/2021 16:35:31 PM - INFO - 2021-08-26 16:35:31 truncate table akshare.average_line_day
+08/26/2021 16:45:24 PM - ERROR - 2021-08-26 16:45:24 出错啦！！！！！single positional indexer is out-of-bounds
+08/26/2021 16:53:10 PM - ERROR - 2021-08-26 16:53:10 出错啦！！！！！single positional indexer is out-of-bounds
+08/26/2021 16:53:13 PM - INFO - time_elapsed_all : 1062
+08/27/2021 17:01:20 PM - INFO - 2021-08-27 17:01:20 truncate table akshare.average_line_day
+08/27/2021 17:16:16 PM - ERROR - 2021-08-27 17:16:16 出错啦！！！！！single positional indexer is out-of-bounds
+08/27/2021 17:27:08 PM - INFO - time_elapsed_all : 1547
+08/30/2021 16:53:34 PM - INFO - 2021-08-30 16:53:34 truncate table akshare.average_line_day
+08/30/2021 17:16:16 PM - INFO - time_elapsed_all : 1361
+08/31/2021 20:58:41 PM - INFO - 2021-08-31 20:58:41 truncate table akshare.average_line_day
+08/31/2021 21:32:09 PM - INFO - time_elapsed_all : 2007
+09/01/2021 16:07:13 PM - INFO - 2021-09-01 16:07:13 truncate table akshare.average_line_day
+09/01/2021 16:16:17 PM - ERROR - 2021-09-01 16:16:17 出错啦！！！！！single positional indexer is out-of-bounds
+09/01/2021 16:23:23 PM - ERROR - 2021-09-01 16:23:23 出错啦！！！！！single positional indexer is out-of-bounds
+09/01/2021 16:23:26 PM - INFO - time_elapsed_all : 972
+09/02/2021 17:18:27 PM - INFO - 2021-09-02 17:18:27 truncate table akshare.average_line_day
+09/02/2021 17:42:22 PM - INFO - time_elapsed_all : 1435
+09/03/2021 16:30:11 PM - INFO - 2021-09-03 16:30:11 truncate table akshare.average_line_day
+09/03/2021 16:47:27 PM - INFO - time_elapsed_all : 1035
+09/06/2021 16:48:06 PM - INFO - 2021-09-06 16:48:06 truncate table akshare.average_line_day
+09/06/2021 16:49:56 PM - ERROR - 2021-09-06 16:49:56 出错啦！！！！！single positional indexer is out-of-bounds
+09/06/2021 16:56:53 PM - ERROR - 2021-09-06 16:56:53 出错啦！！！！！single positional indexer is out-of-bounds
+09/06/2021 17:05:13 PM - ERROR - 2021-09-06 17:05:13 出错啦！！！！！single positional indexer is out-of-bounds
+09/06/2021 17:06:14 PM - INFO - time_elapsed_all : 1088
+09/07/2021 20:52:08 PM - INFO - 2021-09-07 20:52:08 truncate table akshare.average_line_day
+09/07/2021 21:10:01 PM - INFO - time_elapsed_all : 1072
+09/08/2021 15:56:18 PM - INFO - 2021-09-08 15:56:18 truncate table akshare.average_line_day
+09/08/2021 15:58:08 PM - ERROR - 2021-09-08 15:58:08 出错啦！！！！！single positional indexer is out-of-bounds
+09/08/2021 16:12:11 PM - ERROR - 2021-09-08 16:12:11 出错啦！！！！！single positional indexer is out-of-bounds
+09/08/2021 16:12:13 PM - INFO - time_elapsed_all : 955
+09/10/2021 08:53:07 AM - INFO - 2021-09-10 08:53:07 truncate table akshare.average_line_day
+09/10/2021 09:12:08 AM - INFO - time_elapsed_all : 1140
+09/10/2021 16:34:49 PM - INFO - 2021-09-10 16:34:49 truncate table akshare.average_line_day
+09/10/2021 16:49:50 PM - INFO - time_elapsed_all : 900
+09/13/2021 18:53:19 PM - INFO - 2021-09-13 18:53:19 truncate table akshare.average_line_day
+09/13/2021 19:05:57 PM - ERROR - 2021-09-13 19:05:57 出错啦！！！！！single positional indexer is out-of-bounds
+09/13/2021 19:05:57 PM - ERROR - 2021-09-13 19:05:57 出错啦！！！！！single positional indexer is out-of-bounds
+09/13/2021 19:05:57 PM - ERROR - 2021-09-13 19:05:57 出错啦！！！！！single positional indexer is out-of-bounds
+09/13/2021 19:05:57 PM - ERROR - 2021-09-13 19:05:57 出错啦！！！！！single positional indexer is out-of-bounds
+09/13/2021 19:05:58 PM - ERROR - 2021-09-13 19:05:58 出错啦！！！！！single positional indexer is out-of-bounds
+09/13/2021 19:13:34 PM - ERROR - 2021-09-13 19:13:34 出错啦！！！！！single positional indexer is out-of-bounds
+09/13/2021 19:13:41 PM - ERROR - 2021-09-13 19:13:41 出错啦！！！！！single positional indexer is out-of-bounds
+09/13/2021 19:13:45 PM - INFO - time_elapsed_all : 1226
+09/14/2021 16:14:19 PM - INFO - 2021-09-14 16:14:19 truncate table akshare.average_line_day
+09/14/2021 16:23:38 PM - ERROR - 2021-09-14 16:23:38 出错啦！！！！！single positional indexer is out-of-bounds
+09/14/2021 16:23:38 PM - ERROR - 2021-09-14 16:23:38 出错啦！！！！！single positional indexer is out-of-bounds
+09/14/2021 16:30:54 PM - ERROR - 2021-09-14 16:30:54 出错啦！！！！！single positional indexer is out-of-bounds
+09/14/2021 16:30:58 PM - INFO - time_elapsed_all : 998
+09/15/2021 19:22:01 PM - INFO - 2021-09-15 19:22:01 truncate table akshare.average_line_day
+09/15/2021 19:37:24 PM - ERROR - 2021-09-15 19:37:24 出错啦！！！！！single positional indexer is out-of-bounds
+09/15/2021 19:42:34 PM - INFO - time_elapsed_all : 1233
+09/16/2021 17:49:00 PM - INFO - 2021-09-16 17:49:00 truncate table akshare.average_line_day
+09/16/2021 18:00:34 PM - ERROR - 2021-09-16 18:00:34 出错啦！！！！！single positional indexer is out-of-bounds
+09/16/2021 18:11:35 PM - ERROR - 2021-09-16 18:11:35 出错啦！！！！！single positional indexer is out-of-bounds
+09/16/2021 18:13:44 PM - ERROR - 2021-09-16 18:13:44 出错啦！！！！！single positional indexer is out-of-bounds
+09/16/2021 18:13:50 PM - INFO - time_elapsed_all : 1489
+09/17/2021 17:41:42 PM - INFO - 2021-09-17 17:41:42 truncate table akshare.average_line_day
+09/17/2021 18:01:24 PM - INFO - time_elapsed_all : 1182
+09/22/2021 17:57:05 PM - INFO - 2021-09-22 17:57:05 truncate table akshare.average_line_day
+09/22/2021 18:10:18 PM - ERROR - 2021-09-22 18:10:18 出错啦！！！！！single positional indexer is out-of-bounds
+09/22/2021 18:10:19 PM - ERROR - 2021-09-22 18:10:19 出错啦！！！！！single positional indexer is out-of-bounds
+09/22/2021 18:10:19 PM - ERROR - 2021-09-22 18:10:19 出错啦！！！！！single positional indexer is out-of-bounds
+09/22/2021 18:20:53 PM - INFO - time_elapsed_all : 1428
+09/23/2021 16:45:29 PM - INFO - 2021-09-23 16:45:29 truncate table akshare.average_line_day
+09/23/2021 16:57:43 PM - ERROR - 2021-09-23 16:57:43 出错啦！！！！！single positional indexer is out-of-bounds
+09/23/2021 17:07:36 PM - INFO - time_elapsed_all : 1326
+09/24/2021 20:22:45 PM - INFO - 2021-09-24 20:22:45 truncate table akshare.average_line_day
+09/24/2021 20:31:37 PM - ERROR - 2021-09-24 20:31:37 出错啦！！！！！single positional indexer is out-of-bounds
+09/24/2021 20:31:38 PM - ERROR - 2021-09-24 20:31:38 出错啦！！！！！single positional indexer is out-of-bounds
+09/24/2021 20:31:38 PM - ERROR - 2021-09-24 20:31:38 出错啦！！！！！single positional indexer is out-of-bounds
+09/24/2021 20:31:38 PM - ERROR - 2021-09-24 20:31:38 出错啦！！！！！single positional indexer is out-of-bounds
+09/24/2021 20:39:34 PM - INFO - time_elapsed_all : 1008
+09/27/2021 17:46:02 PM - INFO - 2021-09-27 17:46:02 truncate table akshare.average_line_day
+09/27/2021 17:57:11 PM - ERROR - 2021-09-27 17:57:11 出错啦！！！！！single positional indexer is out-of-bounds
+09/27/2021 17:57:11 PM - ERROR - 2021-09-27 17:57:11 出错啦！！！！！single positional indexer is out-of-bounds
+09/27/2021 17:57:11 PM - ERROR - 2021-09-27 17:57:11 出错啦！！！！！single positional indexer is out-of-bounds
+09/27/2021 18:02:44 PM - ERROR - 2021-09-27 18:02:44 出错啦！！！！！single positional indexer is out-of-bounds
+09/28/2021 06:33:41 AM - INFO - 2021-09-28 06:33:41 truncate table akshare.average_line_day
+09/28/2021 06:44:30 AM - ERROR - 2021-09-28 06:44:30 出错啦！！！！！single positional indexer is out-of-bounds
+09/28/2021 06:44:30 AM - ERROR - 2021-09-28 06:44:30 出错啦！！！！！single positional indexer is out-of-bounds
+09/28/2021 06:44:31 AM - ERROR - 2021-09-28 06:44:31 出错啦！！！！！single positional indexer is out-of-bounds
+09/28/2021 06:47:37 AM - ERROR - 2021-09-28 06:47:37 出错啦！！！！！single positional indexer is out-of-bounds
+09/28/2021 06:52:19 AM - INFO - time_elapsed_all : 1117
+09/28/2021 17:41:19 PM - INFO - 2021-09-28 17:41:19 truncate table akshare.average_line_day
+09/28/2021 17:55:48 PM - ERROR - 2021-09-28 17:55:48 出错啦！！！！！single positional indexer is out-of-bounds
+09/28/2021 17:55:48 PM - ERROR - 2021-09-28 17:55:48 出错啦！！！！！single positional indexer is out-of-bounds
+09/28/2021 18:00:46 PM - ERROR - 2021-09-28 18:00:46 出错啦！！！！！single positional indexer is out-of-bounds
+09/28/2021 18:06:56 PM - INFO - time_elapsed_all : 1536
+09/29/2021 17:50:39 PM - INFO - 2021-09-29 17:50:39 truncate table akshare.average_line_day
+09/29/2021 18:06:13 PM - ERROR - 2021-09-29 18:06:13 出错啦！！！！！single positional indexer is out-of-bounds
+09/29/2021 18:19:56 PM - INFO - time_elapsed_all : 1756
+09/30/2021 16:33:49 PM - INFO - 2021-09-30 16:33:49 truncate table akshare.average_line_day
+09/30/2021 16:41:57 PM - ERROR - 2021-09-30 16:41:57 出错啦！！！！！single positional indexer is out-of-bounds
+09/30/2021 16:41:58 PM - ERROR - 2021-09-30 16:41:58 出错啦！！！！！single positional indexer is out-of-bounds
+09/30/2021 16:41:58 PM - ERROR - 2021-09-30 16:41:58 出错啦！！！！！single positional indexer is out-of-bounds
+09/30/2021 16:48:28 PM - INFO - time_elapsed_all : 879
+10/11/2021 19:43:21 PM - INFO - 2021-10-11 19:43:21 truncate table akshare.average_line_day
+10/11/2021 19:55:50 PM - ERROR - 2021-10-11 19:55:50 出错啦！！！！！single positional indexer is out-of-bounds
+10/11/2021 19:55:51 PM - ERROR - 2021-10-11 19:55:51 出错啦！！！！！single positional indexer is out-of-bounds
+10/11/2021 19:55:51 PM - ERROR - 2021-10-11 19:55:51 出错啦！！！！！single positional indexer is out-of-bounds
+10/11/2021 20:08:02 PM - ERROR - 2021-10-11 20:08:02 出错啦！！！！！single positional indexer is out-of-bounds
+10/11/2021 20:08:02 PM - ERROR - 2021-10-11 20:08:02 出错啦！！！！！single positional indexer is out-of-bounds
+10/11/2021 20:08:03 PM - INFO - time_elapsed_all : 1481
+10/15/2021 13:29:36 PM - INFO - time_elapsed_all : 71
+10/15/2021 14:29:42 PM - INFO - time_elapsed_all : 3511
+10/15/2021 16:38:58 PM - INFO - time_elapsed_all : 5
+10/15/2021 16:39:44 PM - INFO - time_elapsed_all : 3
+10/15/2021 16:45:42 PM - INFO - time_elapsed_all : 292
+10/15/2021 16:46:14 PM - INFO - time_elapsed_all : 4
+10/15/2021 16:46:47 PM - INFO - time_elapsed_all : 4
+10/17/2021 01:01:56 AM - INFO - time_elapsed_all : 11517

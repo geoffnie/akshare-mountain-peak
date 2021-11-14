@@ -1,0 +1,12 @@
+
+systemctl disable mountainpeak
+systemctl stop mountainpeak
+
+rm -rf /usr/lib/systemd/system/mountainpeak.service
+
+cp mountainpeak.service /usr/lib/systemd/system/
+
+systemctl enable mountainpeak
+systemctl restart mountainpeak
+systemctl status mountainpeak
+

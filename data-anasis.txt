@@ -51,6 +51,7 @@ order by t1.`净利润-同比增长` - t2.`净利润-同比增长` desc
 
 
 -- 创建临时表表示近期业绩情况
+drop table if exists tmp.yj_info;
 create table tmp.yj_info
 select t1.*,t2.net_income2, t2.net_income_ratio2, round(t1.net_income_ratio - t2.net_income_ratio2, 1) as up_ratio  from (
 select 股票代码 as code,股票简称 as name,round(`净利润-净利润`/10000) as net_income,round(`净利润-同比增长`,1) as net_income_ratio from akshare.yjbb_season where dat = '20210331' 
@@ -59,7 +60,7 @@ left JOIN
 (
 select 股票代码 as code ,股票简称 as name,round(`净利润-净利润`/10000) as net_income2,round(`净利润-同比增长`,1) as net_income_ratio2 from akshare.yjbb_season where dat = '20201231'
 ) t2
-on t1.code = t2.code
+on t1.code = t2.code;
 
 
 
