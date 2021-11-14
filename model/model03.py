@@ -16,7 +16,7 @@ DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
 logging.basicConfig(filename='my.log', level=logging.INFO, format=LOG_FORMAT, datefmt=DATE_FORMAT)
 
 scheduler = BlockingScheduler()
-engine = create_engine('mysql+pymysql://root:root@192.168.52.110/akshare?charset=utf8',
+engine = create_engine('mysql+pymysql://root:root@yunfuwu01/akshare?charset=utf8',
                        encoding='utf-8',
                        echo=False,
                        pool_pre_ping=True,

@@ -275,7 +275,7 @@ def xsjj_analysis(
 
 #工具类，删除数据
 def dml_mysql(sql):
-    conn = pymysql.connect(host='192.168.52.110', port=3306, user='root', passwd='root', db='akshare')
+    conn = pymysql.connect(host='yunfuwu01', port=3306, user='root', passwd='root', db='akshare')
     cursor = conn.cursor()
     cursor.execute(sql)
     conn.commit()
@@ -285,7 +285,7 @@ import pymysql
 from sqlalchemy import create_engine
 from apscheduler.schedulers.blocking import BlockingScheduler
 scheduler = BlockingScheduler() 
-engine = create_engine('mysql+pymysql://root:root@192.168.52.110/akshare?charset=utf8',
+engine = create_engine('mysql+pymysql://root:root@yunfuwu01/akshare?charset=utf8',
                        encoding='utf-8',
                        echo=False,
                        pool_pre_ping=True,

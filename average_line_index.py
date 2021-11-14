@@ -19,7 +19,7 @@ import  pymysql
 from sqlalchemy import create_engine
 from apscheduler.schedulers.blocking import BlockingScheduler
 scheduler = BlockingScheduler() 
-engine = create_engine('mysql+pymysql://root:root@192.168.52.110/akshare?charset=utf8',
+engine = create_engine('mysql+pymysql://root:root@yunfuwu01/akshare?charset=utf8',
                        encoding='utf-8',
                        echo=False,
                        pool_pre_ping=True,
@@ -27,7 +27,7 @@ engine = create_engine('mysql+pymysql://root:root@192.168.52.110/akshare?charset
  
 def delete_data_from_mysql(delete_sql):
     print(111)
-    conn=pymysql.connect('192.168.52.110','root','root','akshare',3306)
+    conn=pymysql.connect('yunfuwu01','root','root','akshare',3306)
     cursor =conn.cursor()
     cursor.execute(delete_sql)
     conn.close()

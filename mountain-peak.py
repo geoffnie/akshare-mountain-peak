@@ -113,7 +113,7 @@ def get_trade_cal(is_init=False):
 
 #工具类，删除数据
 def dml_mysql(sql):
-    conn = pymysql.connect(host='192.168.52.110', port=3306, user='root', passwd='root', db='akshare')
+    conn = pymysql.connect(host='yunfuwu01', port=3306, user='root', passwd='root', db='akshare')
     cursor = conn.cursor()
     cursor.execute(sql)
     conn.commit()
@@ -731,7 +731,7 @@ print(datetime.datetime.now().hour)
 #获取股票代码
 def get_code():
     sql = "select distinct  LPAD(股票代码,6,'0') as code from akshare.half_day_fund_flow "
-    conn = pymysql.connect(host='192.168.52.110', port=3306, user='root', passwd='root', db='akshare')
+    conn = pymysql.connect(host='yunfuwu01', port=3306, user='root', passwd='root', db='akshare')
     cursor = conn.cursor()
     cursor.execute(sql)
     conn.commit()

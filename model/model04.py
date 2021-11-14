@@ -16,7 +16,7 @@ DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
 logging.basicConfig(filename='my.log', level=logging.INFO, format=LOG_FORMAT, datefmt=DATE_FORMAT)
 
 scheduler = BlockingScheduler()
-engine = create_engine('mysql+pymysql://root:root@192.168.52.110/akshare?charset=utf8',
+engine = create_engine('mysql+pymysql://root:root@yunfuwu01/akshare?charset=utf8',
                        encoding='utf-8',
                        echo=False,
                        pool_pre_ping=True,
@@ -45,7 +45,7 @@ def get_data():
 
 
 # def getdata_mysql(sql):
-#     conn = pymysql.connect(host='192.168.52.110', port=3306, user='root', passwd='root', db='akshare')
+#     conn = pymysql.connect(host='yunfuwu01', port=3306, user='root', passwd='root', db='akshare')
 #     cursor = conn.cursor()
 #     cursor.execute(sql)
 #     conn.commit()
