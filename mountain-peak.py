@@ -8,7 +8,8 @@ Created on Mon May 17 09:33:05 2021
 import datetime
 from dateutil.relativedelta import relativedelta 
 import akshare as ak
-
+import random
+import gc
 import time
 import pandas as pd
 import tushare as ts
@@ -17,18 +18,29 @@ from sqlalchemy import create_engine
 from apscheduler.schedulers.blocking import BlockingScheduler
 from multiprocessing import Pool 
 import logging
+import requests
+from bs4 import BeautifulSoup
+from stock_bussiness_analysis import get_jgcc_gdrs_xsjj
+from stock_bussiness_analysis import get_jygc_jyps_ywfw
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
 logging.basicConfig(filename='my.log', level=logging.INFO, format=LOG_FORMAT, datefmt=DATE_FORMAT)
 
+host = 'yunfuwu01'
+# host = '127.0.0.1'
+user = 'root'
+passwd = 'akpq92nieqingoo*rootNQ'
+port = '3306'
+db = 'akshare'
+
 scheduler = BlockingScheduler() 
-engine = create_engine('mysql+pymysql://root:root@yunfuwu01/akshare?charset=utf8',
+engine = create_engine('mysql+pymysql://{0}:{1}@{2}:{3}/{4}?charset=utf8'.format(user, passwd, host, port, db),
                        encoding='utf-8',
                        echo=False,
                        pool_pre_ping=True,
                        pool_recycle=3600) 
 ts.set_token('60ee696150438df37e3b503ebd7e7c74df03784344985a80b4143384')
-pro = ts.pro_api()
+# pro = ts.pro_api()
 
 
 #显示所有列
@@ -73,24 +85,35 @@ pd.set_option('display.width', 200)
 
 
 
-# =============================================================================
-# data = pro.stock_basic(exchange='', list_status='L', fields='ts_code,symbol,name,area,industry,list_date')
-# print(data)
-# #print(data.iloc[447:450,:])
-# #df = ts.pro_bar(ts_code='{0}'.format('001201.SZ'), adj='qfq', start_date='20180101', end_date='20181011')
-# #print(df)
-# 
-# for i,tscode in enumerate(data['ts_code']):
-# 
-#     df = ts.pro_bar(ts_code='{0}'.format(tscode), adj='qfq', start_date='20180101', end_date='20181011')
-#     if df is not None :
-#         print(df.head(2))
-#     print("========================" + str(i))
-# #    if i % 400 == 399:
-# #        time.sleep(60)
-# =============================================================================
 
 
+def ua_random():
+    '''
+    随机获取一个user-agent
+    :return: user-agent
+    '''
+    user_agent_list = [
+        'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50',
+        'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50',
+        "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1062.0 Safari/536.3",
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1062.0 Safari/536.3",
+        "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; 360SE)",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv,2.0.1) Gecko/20100101 Firefox/4.0.1",
+        "Mozilla/5.0 (Windows NT 6.1; rv,2.0.1) Gecko/20100101 Firefox/4.0.1",
+        "Opera/9.80 (Macintosh; Intel Mac OS X 10.6.8; U; en) Presto/2.8.131 Version/11.11",
+        "Opera/9.80 (Windows NT 6.1; U; en) Presto/2.8.131 Version/11.11",
+        "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Maxthon 2.0)",
+        "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; TencentTraveler 4.0)",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_0) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.56 Safari/535.11",
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.1 Safari/536.3",
+        "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.1 Safari/536.3",
+        "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.0 Safari/536.3",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24",
+        "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24"]
+
+    return random.choice(user_agent_list)
 
 
 #每日早晨8点开始跑任务，获取今年股市日历
@@ -113,7 +136,7 @@ def get_trade_cal(is_init=False):
 
 #工具类，删除数据
 def dml_mysql(sql):
-    conn = pymysql.connect(host='yunfuwu01', port=3306, user='root', passwd='root', db='akshare')
+    conn = pymysql.connect(host=host, port=3306, user=user, passwd=passwd, db=db)
     cursor = conn.cursor()
     cursor.execute(sql)
     conn.commit()
@@ -124,7 +147,10 @@ def dml_mysql(sql):
 @scheduler.scheduled_job('cron', hour='15', minute='1', coalesce=False, misfire_grace_time=60, max_instances=20)
 def get_stock_baseinfo():
     sql = 'truncate table akshare.stock_baseinfo'
-    dml_mysql(sql)
+    try:
+        dml_mysql(sql)
+    except Exception as e:
+        print(e)
     ts.set_token('60ee696150438df37e3b503ebd7e7c74df03784344985a80b4143384')
     pro = ts.pro_api()
     data = pro.stock_basic(exchange='', list_status='L', fields='ts_code,symbol,name,area,industry,list_date')
@@ -211,7 +237,7 @@ def get_half_day_fund_flow_concept():
     else:
         stock_fund_flow_concept_df['dat'] = '{0}'.format(time.strftime('%Y%m%d%H', time.localtime(time.time())))
 #    stock_fund_flow_concept_df['dat'] = '2021060312'
-    print(stock_fund_flow_concept_df)
+#     print(stock_fund_flow_concept_df)
 
     stock_fund_flow_concept_df = stock_fund_flow_concept_df.drop_duplicates(subset=['行业', 'dat'], keep='first')
     stock_fund_flow_concept_df['行业'] = [str(x).zfill(6) for x in stock_fund_flow_concept_df['行业'].to_list()]
@@ -234,7 +260,7 @@ def get_half_day_fund_flow_industry():
     else:
         stock_fund_flow_industry_df['dat'] = '{0}'.format(time.strftime('%Y%m%d%H', time.localtime(time.time())))
 #    stock_fund_flow_industry_df['dat'] = '2021060312'
-    print(stock_fund_flow_industry_df)
+#     print(stock_fund_flow_industry_df)
 
     stock_fund_flow_industry_df = stock_fund_flow_industry_df.drop_duplicates(subset=['行业', 'dat'], keep='first')
     stock_fund_flow_industry_df['行业'] = [str(x).zfill(6) for x in stock_fund_flow_industry_df['行业'].to_list()]
@@ -275,16 +301,19 @@ def get_yjbb_season(is_init=False):
         quarter_end_day.isoformat()  
         dat_list.append(str(quarter_end_day.strftime("%Y%m%d")))  
     for season_date in dat_list:
-        print(season_date)
+        # print(season_date)
         stock_em_yjbb_df = ak.stock_em_yjbb(date=season_date)
-        print(stock_em_yjbb_df)
+        # print(stock_em_yjbb_df)
         stock_em_yjbb_df['dat'] = '{0}'.format(season_date)
                 
         
         table_name = 'yjbb_season'
         #先删除季度数据
-        dml_sql = "delete from akshare.yjbb_season where dat='{0}'".format(season_date)
-        dml_mysql(dml_sql)
+        try:
+            dml_sql = "delete from akshare.yjbb_season where dat='{0}'".format(season_date)
+            dml_mysql(dml_sql)
+        except Exception as e:
+            print(e)
         #插入数据
         stock_em_yjbb_df.to_sql(table_name, engine, if_exists='append',index= False)    
 
@@ -320,14 +349,17 @@ def get_yjkb_season(is_init=False):
         dat_list.append(str(quarter_end_day.strftime("%Y%m%d")))  
     for season_date in dat_list:
         stock_em_yjkb_df  = ak.stock_em_yjkb(date=season_date)
-        print(stock_em_yjkb_df )
+        # print(stock_em_yjkb_df )
         stock_em_yjkb_df ['dat'] = '{0}'.format(season_date)
                 
         
         table_name = 'yjkb_season'
         #先删除季度数据
-        dml_sql = "delete from akshare.yjkb_season where dat='{0}'".format(season_date)
-        dml_mysql(dml_sql)
+        try:
+            dml_sql = "delete from akshare.yjkb_season where dat='{0}'".format(season_date)
+            dml_mysql(dml_sql)
+        except Exception as e:
+            print(e)
         #插入数据
         stock_em_yjkb_df .to_sql(table_name, engine, if_exists='append',index= False)  
 
@@ -347,46 +379,87 @@ def get_yjkb_season(is_init=False):
 
 
 #获取同花顺概念板块
-# @scheduler.scheduled_job('cron', hour='15', minute='5', coalesce=False, misfire_grace_time=600, max_instances=20)
+@scheduler.scheduled_job('cron', hour='7,15,20', minute='5', coalesce=False, misfire_grace_time=600, max_instances=20)
 def get_ths_board_concept_name():
-    
-    board_concept_name = ak.stock_board_concept_name_ths()
-    board_concept_name['code'] = [url.split("/")[-2] for url in board_concept_name['url'].to_list()]
-    print(board_concept_name)
+    try:
+        print("INFO: 开始同花顺概念板块数据获取任务：")
+        # dml_mysql("truncate table akshare.ths_board_concept_name_bak")
+        # dml_mysql("insert into akshare.ths_board_concept_name_bak select * from akshare.ths_board_concept_name")
+        # dml_mysql("truncate table akshare.ths_board_concept_name")
+        board_concept_name = ak.stock_board_concept_name_ths()
+        print(board_concept_name)
+        for i in board_concept_name.name.tolist():
+            print(i)
+        # board_concept_name.columns = ['dat', 'name', 'stock_num' , 'url']
+        board_concept_name.columns = ['name',  'url']
+        board_concept_name['code'] = [url.split("/")[-2] for url in board_concept_name['url'].to_list()]
+        # board_concept_name['dat'] = '{0}'.format(time.strftime('%Y%m%d', time.localtime(time.time())))
+        # print(board_concept_name)
 
-    table_name = 'ths_board_concept_name'
-    #插入数据
-    board_concept_name.to_sql(table_name, engine, if_exists='replace',index= False)
+        table_name = 'ths_board_concept_name'
+        #插入数据
+        board_concept_name.to_sql(table_name, engine, if_exists='replace',index= False)
+        print("INFO: 插入同花顺概念板块成功")
+    except Exception as e:
+        print(e)
+        print("ERROR: 插入同花顺概念板块失败！")
+
+
 
 
 #获取同花顺概念相关股票
-# @scheduler.scheduled_job('cron', hour='15', minute='5', coalesce=False, misfire_grace_time=600, max_instances=20)
+@scheduler.scheduled_job('cron', hour='7,12,14,17,20', minute='15', coalesce=False, misfire_grace_time=600, max_instances=20)
 def get_ths_board_concept_stock():
-    
-    dml_mysql("insert into akshare.board_concept_cons_stock_bak select * from akshare.ths_board_concept_stock")
-    dml_mysql("truncate table akshare.ths_board_concept_stock")
-    
-    board_concept_name = ak.stock_board_concept_name_ths()
-    for i,name in enumerate(board_concept_name['name'].to_list()):
-        print(i)
-        time.sleep(5)
-        print()
-        df = ak.stock_board_concept_cons_ths(symbol="{0}".format(name))
-        df['dat'] = '{0}'.format(time.strftime('%Y%m%d', time.localtime(time.time())))
-        df['concept_name'] = name
-    
-        table_name = 'ths_board_concept_stock'
-        #插入数据
-        df.to_sql(table_name, engine, if_exists='append',index= False)
+    try:
+        print("INFO: 开始同花顺概念板块相关股票数据获取任务：")
+        dml_mysql("truncate table if exists akshare.ths_board_concept_stock_bak")
+        dml_mysql("truncate table if exists akshare.ths_board_concept_stock_newest")
 
-# get_ths_board_concept_name()
-# get_ths_board_concept_stock()
+        board_concept_name = ak.stock_board_concept_name_ths()
+        # board_concept_name.columns = ['dat', 'name', 'stock_num', 'url']
+        board_concept_name.columns = [ 'name', 'url']
+        print(board_concept_name)
+
+        # print(board_concept_name)
+        for i,name in enumerate(board_concept_name['name'].to_list()):
+            try:
+                # print(i)
+                time.sleep(3)
+                # print()
+                df = ak.stock_board_concept_cons_ths(symbol="{0}".format(name))
+                df['dat'] = '{0}'.format(time.strftime('%Y-%m-%d', time.localtime(time.time())))
+                df['concept_name'] = name
+                df = df.drop_duplicates(subset=['代码', 'concept_name'], keep='first')
+                df = df.replace('--', '')
+                # print(df)
+
+                table_name = 'ths_board_concept_stock_bak'
+                #插入数据，每日如果概念板块中增加数据，则增加相应股票
+                df.to_sql(table_name, engine, if_exists='append',index= False)
+                #插入最新信息，获取每日最新市值
+                table_name1 = "ths_board_concept_stock_newest"
+                df.to_sql(table_name1, engine, if_exists='append', index=False)
+
+                print("INFO: 第{0}个概念{1}板块插入成功".format(str(i), name))
+
+            except Exception as e:
+                print(e)
+                print("ERROR: 第{0}个概念{1}板块插入失败！".format(str(i), name))
+                continue
+        dml_mysql('''insert into akshare.ths_board_concept_stock 
+        select t1.* from akshare.ths_board_concept_stock_bak t1 left join 
+        akshare.ths_board_concept_stock t2         
+        on t1.代码 = t2.代码
+        and t1.concept_name  = t2.concept_name  
+        where t2.concept_name is null''')
+        print("同花顺概念板块相关股票数据插入成功，任务成功")
+    except Exception as e:
+        dml_mysql('''create table if not exists akshare.ths_board_concept_stock 
+        select * from akshare.ths_board_concept_stock_bak''')
+        print(e)
+        print("ERROR: 同花顺概念板块相关股票数据获取任务失败！")
 
 
-
-# import akshare as ak
-# stock_history_dividend_detail_df = ak.stock_history_dividend_detail(indicator="分红", stock="600026", date="")
-# print(stock_history_dividend_detail_df)
 
 
 #获取股票分红数据
@@ -415,10 +488,10 @@ def get_xl_stock_history_dividend_detail():
         
 # get_xl_stock_history_dividend_detail()
 
-@scheduler.scheduled_job('cron', hour='17', minute='1', coalesce=False, misfire_grace_time=60, max_instances=20)
+# @scheduler.scheduled_job('cron', hour='17', minute='1', coalesce=False, misfire_grace_time=60, max_instances=20)
 def get_daily_basic():
-    engine = create_engine('mysql+pymysql://root:root@yunfuwu01/akshare?charset=utf8')
-    
+    engine = create_engine('mysql+pymysql://{0}:{1}@{2}:{3}/{4}?charset=utf8'.format(user, passwd, host, port, db))
+
     ts.set_token('60ee696150438df37e3b503ebd7e7c74df03784344985a80b4143384')
     pro = ts.pro_api()
     
@@ -430,185 +503,13 @@ def get_daily_basic():
     df.to_sql(table_name, engine, if_exists='append',index= False)
 
 
-# get_daily_basic()
+
 
 # @scheduler.scheduled_job('cron', hour='8', minute='0')
 def schedule_0800():
     get_trade_cal(True)
 
 
-
-
-
-#stock_fund_flow_industry_df = ak.stock_fund_flow_industry(symbol="即时")
-#print(stock_fund_flow_industry_df)
-#print(stock_fund_flow_industry_df.columns)
-#
-#stock_fund_flow_industry_df.columns = ['序号', '行业', '行业指数', '概念涨跌幅', '流入资金', '流出资金', '净额', '公司家数', '领涨股', '个股涨跌幅','当前价']
-#print(stock_fund_flow_industry_df.columns)
-
-
-#get_daily_basic()
-
-
-#get_yjbb_season(is_init=True)
-#get_yjkb_season(is_init=True)    
-
-
-
-
-
-
-
-
-
-#print(datetime.datetime.strptime('13.05.2021 00:00:00', "%d.%m.%Y %H:%M:%S"))
-
-#if __name__ == '__main__':
-#    scheduler.start()
-#    get_half_day_fund_flow()
-#    get_half_day_fund_flow_concept()
-#    get_half_day_fund_flow_industry()
-    
-    
-##    scheduler.start()
-#file_timestamp = 1621440600.0
-#file_timestamp = time.localtime(file_timestamp)
-#print(time.strftime('%Y-%m-%d %H:%M:%S', file_timestamp))
-##print(time.strftime('%Y-%m-%d %H:%M:%S', 1621440600))
-#print(file_timestamp)
-#
-#
-#
-#print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-#print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-#print(datetime.datetime.strptime('24.05.2021 08:00:00', "%d.%m.%Y %H:%M:%S"))
-#print(time.mktime(time.strptime('2021-05-24 08:00:00',"%Y-%m-%d %H:%M:%S")))
-#print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(1621814400)))
-#print(time.mktime(time.strptime('2021-05-24 03:00:00',"%Y-%m-%d %H:%M:%S")))
-#
-#print(time.time())
-##1621827444
-#
-##1621814400
-
-
-
-
-
-
-
-
-
-
-# =============================================================================
-# sql = 'select * from akshare.history_trade_day_tmp order by code,日期'
-# #获取查询数据
-# df = pd.read_sql_query(sql, engine)
-# #df = df.head(100)
-# #print(df)
-# list_sort_amount = []
-# for i in range(len(df)):
-# #    print(df.iloc[i,1], df.iloc[i-1,1])
-# #    print(df.iloc[i,11] , df.iloc[i-1,11])
-# #    print("==========")
-#     if i ==0 :
-#         value = 0
-#     else:
-#         if df.iloc[i,1] != df.iloc[i-1,1]:
-#             value = 0
-#         else:
-#             if  df.iloc[i,11] < df.iloc[i-1,11]:
-#                 value = list_sort_amount[-1] + 1
-#             else:
-#                 value = 0
-#     list_sort_amount.append(value)
-# 
-# df['sort_amount'] = list_sort_amount
-# 
-# table_name = 'history_trade_day_tmp1'
-# df.to_sql(table_name, engine, if_exists='replace',index= False) 
-# 
-# print("=============")
-# =============================================================================
-
-
-
-# =============================================================================
-# tool_trade_date_hist_sina_df = ak.tool_trade_date_hist_sina()
-# print(tool_trade_date_hist_sina_df)
-# 
-# table_name = 'trade_date_hist_sina'
-# 
-# tool_trade_date_hist_sina_df.to_sql(table_name, engine, if_exists='replace',index= False)
-# =============================================================================
-
-
-
-
-
-#def get_flow_anasys():
-    
-    
-
-# =============================================================================
-# sql = "select trade_date from akshare.trade_date_hist_sina where trade_date >= '2021-05-17' and trade_date <CURRENT_DATE() "
-# 
-# df = pd.read_sql_query(sql, engine)
-# 
-# print(df)
-# for i in df.iloc[:,0]:
-#     print(i.replace("-","") + '15')
-#     dat = i.replace("-","") + '15'
-# 
-# 
-# 
-# 
-#     sql_data = '''select 
-#     -- fw.*, yj.net_income, yj.net_income_ratio, yj.net_income_ratio2, yj.up_ratio 
-#     *
-#     from 
-#     (
-#     select t1.*
-#     ,t2.total_mv
-#     , round(t1.big_amount_flow/t2.total_mv *100, 2) as total_mv_ratio
-#     -- , round(t1.big_amount_flow/t2.circ_mv *100,3) as circ_mv_ratio 
-#     , round(t1.all_amount/t2.total_mv *100,2) as all_amount_ratio 
-#     , round(t1.all_amount/t1.big_amount_flow) as big_amount_ratio
-#     from (
-#     select *
-#     ,round(case when instr(大单流入, '万') > 0 then  replace(大单流入, '万', '')   when instr(大单流入, '亿') > 0 then replace(大单流入, '亿', '') * 10000 else 大单流入 / 10000 end , 0) as big_amount_flow 
-#     ,round(case when instr(成交额, '万') > 0 then  replace(成交额, '万', '')   when instr(成交额, '亿') > 0 then replace(成交额, '亿', '') * 10000 else 成交额 / 10000 end, 0) as all_amount
-#     ,round(replace(涨跌幅, '%', ''), 1) as up_down_ratio
-#     ,LPAD(股票代码,6,'0') as code
-#     from half_day_fund_flow where 
-#     dat ='{0}' 
-#     ) t1
-#     left join 
-#     (
-#     select left(ts_code ,6) as ts_code, trade_date, round(total_mv) as total_mv, round(circ_mv) as circ_mv  from akshare.daily_basic 
-#     ) t2
-#     on t1.code  = t2.ts_code
-#     order by round(t1.big_amount_flow/t2.total_mv *1000, 3) desc
-#     ) fw   -- 获取每只股的资金流向信息
-#     left join
-#     tmp.yj_info yj
-#     on fw.code = yj.code
-#     -- where yj.up_ratio >1000
-#     -- and big_amount_flow >4000
-#     -- where big_amount_ratio <=10
-#     where SUBSTRING(fw.code,1,3) !='688'
-#     order by 
-#     up_down_ratio desc,
-#     -- yj.up_ratio desc,
-#     total_mv_ratio desc,
-#     big_amount_ratio
-#     -- dat desc'''.format(dat)
-#     df_flow_ana = pd.read_sql_query(sql_data, engine)
-# #    print(df_flow_ana)
-#     table_name_flow = 'flow_anasys'
-#     df_flow_ana.to_sql(table_name_flow, engine, if_exists='append',index= False)
-# =============================================================================
 
 
 
@@ -642,96 +543,11 @@ def get_board_concept_cons_stock():
 
 
 
-#get_board_concept_cons_stock()
-
-
-
-
-
-
-print(datetime.datetime.now())
-print(type(datetime.datetime.now()))
-print(datetime.datetime.now().hour)
-
-
-# get_half_day_fund_flow()
-# get_half_day_fund_flow_concept()
-# get_half_day_fund_flow_industry()
-
-
-# get_yjbb_season()
-# get_yjkb_season()
-
-
-
-# stock_zh_a_spot_df = ak.stock_zh_a_spot()
-# #print(stock_zh_a_spot_df)
-# filter1 = stock_zh_a_spot_df['名称'].isin({
-# '新疆交建'
-# ,'捷成股份'
-# ,'海南橡胶'
-# ,'洛阳钼业'
-# ,'中金岭南'
-# ,'钢研高纳'
-# ,'星源材质'
-# ,'东软载波'
-# ,'丽尚国潮'
-# ,'济南高新'
-# ,'上港集团'
-# ,'华胜天成'
-# ,'海欣股份'
-# ,'广汇汽车'
-# ,'韶钢松山'
-# ,'华西股份'
-# ,'亚盛集团'
-# ,'粤电力A'
-# ,'康尼机电'
-# ,'绿茵生态'
-# ,'兰花科创'
-# ,'新大正'
-# ,'震安科技'
-# ,'吉大正元','宜宾纸业',
-# '天汽模',
-# '章源钨业',  '英科医疗', '湘电股份',
-# '金陵体育','吉大正元',
-# '宝新能源',
-# '宜宾纸业', '人民同泰', '神马股份', '天汽模', '中信特钢', '海得控制', '隆盛科技', '恒润股份', '章源钨业',  '英科医疗', '湘电股份', '宝新能源', '三元股份', '研奥股份', '长白山', '飞利信', '冀中能源', '兰花科技', '海特高新', '粤电力A','新世界' , '达实智能', '福田汽车', 'TCL科技', '西部矿业', '应流股份','北京银行', '飞利信', '佳禾智能', '金运激光', '润和软件', '吉艾科技', '西藏矿业',  '豆神教育', '山煤国际', '广大证券',  '宝钢股份', '蒙泰高新', '闽东电力', '佳力图' ,'旗天科技','金种子酒','宋城演艺', '诚迈科技', '复星医药', '岳阳林纸', '长盈精密', '我爱我家', '出版传媒', '国光电器', '宸展光电', '秋田微', '天源股份', '泰福泵业', '易联众'
-# ,'吉艾科技'
-# ,'机器人'
-# ,'易事特'
-# ,'吉艾科技'
-# ,'创业黑马'
-# ,'恒星科技'
-# ,'金辰股份' 
-# ,'上海能源'
-# ,'中国重工'
-# ,'瑞丰新材'
-# ,'佳创视讯'
-# ,'万马科技'
-# ,'冰轮环境'
-# ,'康龙化成'
-# ,'彤程新材'
-# ,'鹏辉能源' 
-# ,'万华化学'
-# ,'三七互娱'
-# ,'万盛股份'
-# ,'中国黄金'
-# ,'清水源' 
-# ,''
-# ,''
-# ,''
-# ,''
-# ,''       })
-# print(stock_zh_a_spot_df[filter1].sort_values('涨跌幅',ascending = False))
-
-
-
-
 
 #获取股票代码
 def get_code():
     sql = "select distinct  LPAD(股票代码,6,'0') as code from akshare.half_day_fund_flow "
-    conn = pymysql.connect(host='yunfuwu01', port=3306, user='root', passwd='root', db='akshare')
+    conn = pymysql.connect(host=host, port=port, user=user, passwd=passwd, db=db)
     cursor = conn.cursor()
     cursor.execute(sql)
     conn.commit()
@@ -745,21 +561,21 @@ def get_code():
 
 def get_stock_zh_a_hist(code, date, cnt, i):
     try:
-        engine = create_engine('mysql+pymysql://root:root@yunfuwu01/akshare?charset=utf8',
+        engine = create_engine('mysql+pymysql://{0}:{1}@{2}:{3}/{4}?charset=utf8'.format(user, passwd, host, port, db),
                                encoding='utf-8',
                                echo=False,
                                pool_pre_ping=True,
                                pool_recycle=3600)
         stock_zh_a_hist_df = ak.stock_zh_a_hist(symbol="{0}".format(code), period="daily", start_date=date, end_date=date, adjust="qfq")
         stock_zh_a_hist_df['code']=code
-        print(stock_zh_a_hist_df)
+        # print(stock_zh_a_hist_df)
         name_df = pd.read_sql_query("select symbol as code, name from akshare.stock_baseinfo", engine)
         stock_zh_a_hist_df['name'] = name_df[name_df['code'] == code]['name'].to_list()[0]
         # print(code)
         # print(date)
-        print(stock_zh_a_hist_df)
+        # print(stock_zh_a_hist_df)
     
-        engine = create_engine('mysql+pymysql://root:root@yunfuwu01/akshare?charset=utf8')
+        engine = create_engine('mysql+pymysql://{0}:{1}@{2}:{3}/{4}?charset=utf8'.format(user, passwd, host, port, db))
            
         table_name = 'history_trade_day_qfq'
         #插入数据
@@ -769,7 +585,6 @@ def get_stock_zh_a_hist(code, date, cnt, i):
         print("未插入")
         print(e)
         # continue
-# get_stock_zh_a_hist('000001', '20211026', 3, 2)
 
 # @scheduler.scheduled_job('cron', hour='15', minute='5', coalesce=False, misfire_grace_time=600, max_instances=20)
 def get_stock_zh_a_hist_batch(is_today=True):
@@ -782,21 +597,17 @@ def get_stock_zh_a_hist_batch(is_today=True):
 from (
 select * from (
 select trade_date from  akshare.trade_date_hist_sina 
-where trade_date <= CURRENT_DATE() 
-and trade_date >= (select * from (select * from akshare.trade_date_hist_sina where trade_date <= CURRENT_DATE()  order by trade_date desc limit 60,1) t )
--- and trade_date not in (select 日期 as dat from akshare.history_trade_day_qfq where code= '300437')
-order by trade_date desc
+where trade_date = CURRENT_DATE() 
 ) m,
 (
-select distinct  LPAD(股票代码,6,'0') as code from akshare.half_day_fund_flow
+select LPAD(股票代码,6,'0') as code from( select distinct 股票代码  from akshare.half_day_fund_flow ) t
 ) n
 ) t1
 left join 
-(select code, 日期 as dat from akshare.history_trade_day_qfq where 日期 >= (select * from (select * from akshare.trade_date_hist_sina where trade_date <= CURRENT_DATE()  order by trade_date desc limit 60,1) t )
+(select  日期 as dat, code from akshare.history_trade_day_qfq where 
+日期 = CURRENT_DATE()
 ) t2 on t1.trade_date = t2.dat and t1.code = t2.code
-where t2.code is null
- and t1.trade_date = CURRENT_DATE() 
--- and t1.trade_date = "2021-10-13"
+where t2.code is null 
 '''
             df = pd.read_sql_query(sql, engine)
             date_list = df['date'].to_list()
@@ -806,27 +617,24 @@ where t2.code is null
             # date_list = [ date  for date in df['date'].to_list() if date == '20211013' ]
             # date_list = ['20211013']
         else:
+            # 初始化时，初始最近3个月
             sql = '''select REPLACE(t1.trade_date , "-", "") as date
 , t1.code 
 from (
 select * from (
 select trade_date from  akshare.trade_date_hist_sina 
 where trade_date <= CURRENT_DATE() 
-and trade_date >= (select * from (select * from akshare.trade_date_hist_sina where trade_date <= CURRENT_DATE()  order by trade_date desc limit 220,1) t )
--- and trade_date not in (select 日期 as dat from akshare.history_trade_day_qfq where code= '300437')
-order by trade_date desc
+order by trade_date desc limit 66
 ) m,
 (
-select distinct  LPAD(股票代码,6,'0') as code from akshare.half_day_fund_flow
+select LPAD(股票代码,6,'0') as code from( select distinct 股票代码  from akshare.half_day_fund_flow ) t
 ) n
 ) t1
 left join 
-(select code, 日期 as dat from akshare.history_trade_day_qfq where 
-日期 >= (select * from (select * from akshare.trade_date_hist_sina where trade_date <= CURRENT_DATE()  order by trade_date desc limit 220,1) t )
+(select  日期 as dat, code from akshare.history_trade_day_qfq where 
+日期 >= date_sub(CURRENT_DATE(), INTERVAL 100 day)
 ) t2 on t1.trade_date = t2.dat and t1.code = t2.code
 where t2.code is null order by date desc
--- and t1.trade_date = CURRENT_DATE() 
--- and t1.trade_date = "2021-10-13"
 '''
             df = pd.read_sql_query(sql, engine)
             date_list = df['date'].to_list()
@@ -836,8 +644,8 @@ where t2.code is null order by date desc
         for i in range(len(df)):
             code = code_list[i]
             date = date_list[i]
-            print("i: " + str(i) + " | 总数： " + str(len(df)) + ",  Code: " + str(code) + "================")
-            print("       date: " + str(date) + "--------------")
+            # print("i: " + str(i) + " | 总数： " + str(len(df)) + ",  Code: " + str(code) + "================")
+            # print("       date: " + str(date) + "--------------")
             cnt = len(df)
             pool.apply_async(get_stock_zh_a_hist, (code, date, cnt, i, ))
             # get_stock_zh_a_hist(code, date, cnt, i)
@@ -852,44 +660,44 @@ where t2.code is null order by date desc
     logging.info("time_elapsed_all : %s",str(int(dtime)))
 
 
-@scheduler.scheduled_job('cron', hour='11', minute='31', coalesce=False, misfire_grace_time=60, max_instances=20)
-def schedule_1131_day_fund_flow():
-    dat = '{0}'.format(time.strftime('%Y%m%d', time.localtime(time.time())))
-    sql = " select * from akshare.trade_date_hist_sina where trade_date =date('{0}')".format(dat)
-    df = pd.read_sql_query(sql, engine)
-    if len(df) != 0:
-        try:
-            get_half_day_fund_flow()
-            print("个股资金流任务成功")
-        except Exception as e:
-            print("个股资金流任务失败")
-
-
-@scheduler.scheduled_job('cron', hour='11', minute='31', coalesce=False, misfire_grace_time=60, max_instances=20)
-def schedule_1131_day_fund_flow_concept():
-    dat = '{0}'.format(time.strftime('%Y%m%d', time.localtime(time.time())))
-    sql = " select * from akshare.trade_date_hist_sina where trade_date =date('{0}')".format(dat)
-    df = pd.read_sql_query(sql, engine)
-    if len(df) != 0:
-        try:
-            get_half_day_fund_flow_concept()
-            print("概念资金流任务成功")
-        except Exception as e:
-            print("概念资金流任务失败")
-
-
-
-@scheduler.scheduled_job('cron', hour='11', minute='31', coalesce=False, misfire_grace_time=60, max_instances=20)
-def schedule_1131_day_fund_flow_industry():
-    dat = '{0}'.format(time.strftime('%Y%m%d', time.localtime(time.time())))
-    sql = " select * from akshare.trade_date_hist_sina where trade_date =date('{0}')".format(dat)
-    df = pd.read_sql_query(sql, engine)
-    if len(df) != 0:
-        try:
-            get_half_day_fund_flow_industry()
-            print("行业资金流任务成功")
-        except Exception as e:
-            print("行业资金流任务失败")
+# @scheduler.scheduled_job('cron', hour='11', minute='31', coalesce=False, misfire_grace_time=60, max_instances=20)
+# def schedule_1131_day_fund_flow():
+#     dat = '{0}'.format(time.strftime('%Y%m%d', time.localtime(time.time())))
+#     sql = " select * from akshare.trade_date_hist_sina where trade_date =date('{0}')".format(dat)
+#     df = pd.read_sql_query(sql, engine)
+#     if len(df) != 0:
+#         try:
+#             get_half_day_fund_flow()
+#             print("个股资金流任务成功")
+#         except Exception as e:
+#             print("个股资金流任务失败")
+#
+#
+# @scheduler.scheduled_job('cron', hour='11', minute='31', coalesce=False, misfire_grace_time=60, max_instances=20)
+# def schedule_1131_day_fund_flow_concept():
+#     dat = '{0}'.format(time.strftime('%Y%m%d', time.localtime(time.time())))
+#     sql = " select * from akshare.trade_date_hist_sina where trade_date =date('{0}')".format(dat)
+#     df = pd.read_sql_query(sql, engine)
+#     if len(df) != 0:
+#         try:
+#             get_half_day_fund_flow_concept()
+#             print("概念资金流任务成功")
+#         except Exception as e:
+#             print("概念资金流任务失败")
+#
+#
+#
+# @scheduler.scheduled_job('cron', hour='11', minute='31', coalesce=False, misfire_grace_time=60, max_instances=20)
+# def schedule_1131_day_fund_flow_industry():
+#     dat = '{0}'.format(time.strftime('%Y%m%d', time.localtime(time.time())))
+#     sql = " select * from akshare.trade_date_hist_sina where trade_date =date('{0}')".format(dat)
+#     df = pd.read_sql_query(sql, engine)
+#     if len(df) != 0:
+#         try:
+#             get_half_day_fund_flow_industry()
+#             print("行业资金流任务成功")
+#         except Exception as e:
+#             print("行业资金流任务失败")
 
 
 @scheduler.scheduled_job('cron', hour='15', minute='1', coalesce=False, misfire_grace_time=60, max_instances=20)
@@ -932,14 +740,14 @@ def schedule_1501_day_fund_flow_industry():
             print("行业资金流任务失败")
 
 
-@scheduler.scheduled_job('cron', hour='15', minute='1', coalesce=False, misfire_grace_time=60, max_instances=20)
-def schedule_yj_season():
-    get_yjbb_season()
-    get_yjkb_season()
+# @scheduler.scheduled_job('cron', hour='15', minute='1', coalesce=False, misfire_grace_time=60, max_instances=20)
+# def schedule_yj_season():
+#     get_yjbb_season()
+#     get_yjkb_season()
 
 
 # 批量获取东方财务--个股资金情况
-@scheduler.scheduled_job('cron', hour='15', minute='1,20,40', coalesce=False, misfire_grace_time=60, max_instances=20)
+@scheduler.scheduled_job('cron', hour='15', minute='1,20,40,55', coalesce=False, misfire_grace_time=60, max_instances=20)
 def schedule_get_stock_zh_a_hist_batch():
     dat = '{0}'.format(time.strftime('%Y%m%d', time.localtime(time.time())))
     sql = " select * from akshare.trade_date_hist_sina where trade_date =date('{0}')".format(dat)
@@ -947,9 +755,10 @@ def schedule_get_stock_zh_a_hist_batch():
     if len(df) != 0:
         try:
             get_stock_zh_a_hist_batch(True)
-            print("个股当日详情任务成功")
+            print("INFO: 个股当日详情任务成功")
         except Exception as e:
-            print("个股当日详情任务失败")
+            print(e)
+            print("ERROR: 个股当日详情任务失败!")
 
 
 @scheduler.scheduled_job('cron', hour='15', minute='1', coalesce=False, misfire_grace_time=60, max_instances=20)
@@ -959,16 +768,31 @@ def schedule_get_ths_board_concept():
     df = pd.read_sql_query(sql, engine)
     if len(df) != 0:
         try:
-            get_ths_board_concept_name(True)
-            print("获取概念板块任务成功")
+            get_ths_board_concept_name()
+            print("INFO: 获取概念板块任务成功")
         except Exception as e:
-            print("个股当日详情任务失败")
+            print(e)
+            print("ERROR: 个股当日详情任务失败!")
         try:
-            get_ths_board_concept_stock(True)
-            print("获取概念对应股票任务成功")
+            get_ths_board_concept_stock()
+            print("INFO: 获取概念对应股票任务成功")
         except Exception as e:
-            print("获取概念对应股票任务失败")
+            print(e)
+            print("ERROR: 获取概念对应股票任务失败!")
 
+
+# 批量获取新浪交易日
+@scheduler.scheduled_job('cron', hour='1', coalesce=False, misfire_grace_time=60, max_instances=20)
+def schedule_get_trade_date_hist_sina():
+    try:
+        tool_trade_date_hist_sina_df = ak.tool_trade_date_hist_sina()
+        # print(tool_trade_date_hist_sina_df)
+        table_name = 'trade_date_hist_sina'
+        tool_trade_date_hist_sina_df.to_sql(table_name, engine, if_exists='replace',index= False)
+        print("INFO: 插入新浪交易日成功【trade_date_hist_sina】")
+    except Exception as e:
+        print(e)
+        print("ERROR: 插入新浪交易日失败【trade_date_hist_sina】？？？")
 
 def get_important_stock():
     stock_zh_a_spot_df = ak.stock_zh_a_spot()
@@ -976,58 +800,141 @@ def get_important_stock():
     filter1 = stock_zh_a_spot_df['名称'].isin({
     '英科医疗'
     ,'国脉科技'
-    ,'吉艾科技'
-    ,'佳创视讯'
-    ,'海南橡胶'
-    ,'清水源' 
-    ,'卡倍亿'
-    ,'悦心健康'
-    ,'好利科技'
-    ,'科德教育'
-    ,'吉大通信' 
-    ,'徐家汇'
-    ,'惠泉啤酒'
-    ,'三一重工'
-    ,'闽东电力' 
-    ,'兰花科创'
-    ,'华西证券' 
-    ,'中视传媒'
-    ,'华西股份' 
-    ,'卓翼科技' 
-    ,'新日股份'
-    ,'美丽生态'
-    ,'万年青'
-    ,'川能动力'
-    ,'潍柴重机'
-    ,'南网能源'
-    ,'鞍重股份'
-    ,'中青宝'
-    , '华软科技'
-    , '章源钨业'
-    , '山东海化'
-    , '祥源文化'
-    , '华景股份'
-    ,'昇兴股份'
-    ,'宁德时代'
-    ,'华电重工'
-    ,'富祥药业'
-    ,'百亚股份'
-    , '宸展光电'
-    , '科翔股份'
-    , '欢乐家'
-    , '恒瑞医药'
-    , ''
-    , ''
-    , ''
-    , ''
-    , ''
-    , ''
-    , ''
-    , ''
+        , '红宝丽'
+        , '罗牛山'
+        , '吉峰科技'
     })
     print(stock_zh_a_spot_df[filter1].sort_values('涨跌幅',ascending = False))
 
 
+def get_stock_notice_info_subtask(is_init, stock_code,  stock_name):
+    df_notice_info = pd.DataFrame(columns=['code', 'name', 'dat', 'title', 'content'])
+    try:
+
+        print(stock_code, stock_name)
+
+        headers = {
+            'User-Agent': ua_random(),
+            'Referer': 'http://basic.10jqka.com.cn/'
+        }
+        url = "http://basic.10jqka.com.cn/{0}/event.html#stockpage".format(stock_code)
+        r = requests.get(url, headers=headers)
+        r.encoding = 'GBK'
+        soup = BeautifulSoup(r.text, "lxml", fromEncoding="gb18030")
+        # print(soup)
+        # print(soup.select("#tableList > tbody > tr > td"))
+        list_notice_info = []
+
+        #获取当日公告信息
+        today_text = soup.select("#tableToday > tbody > tr ")
+        # print(today_text)
+
+        for i in range(len(today_text)):
+            # print(i)
+            try:
+                # dat = today_text[0].find_all('td')[0].string
+                dat = str(datetime.datetime.now())[:10]
+                print(dat)
+            except Exception as e:
+                print(e)
+            try:
+                title = ''.join([tag_title.string for tag_title in today_text[i].find_all('strong')]).replace(" ", "").replace(
+                    "：", "").replace("\r\n", "").replace("\r", "").replace("\n", "").strip()
+            except Exception as e:
+                print(e)
+            try:
+                content = ''.join([tag_content.text for tag_content in today_text[i].select("td > span") if
+                                   tag_content.text != None]).replace(" ", "").replace("\r\n", "").replace("\r",
+                                                                                                           "").replace(
+                    "\n", "").strip()
+            except Exception as e:
+                print(e)
+
+            try:
+                list_notice_info.append([stock_code, stock_name, dat, title, content])
+            except Exception as e:
+                print(e)
+
+        # 获取之前公告信息
+        aa = soup.select("#tableList > tbody > tr")
+
+        for i, tag in enumerate(aa):
+            try:
+                # print(len(aa[i].find_all('td')))
+                # print(aa[i].find_all('td')[0].string)
+                dat = aa[i].find_all('td')[0].string
+            except Exception as e:
+                print(e)
+            try:
+                title = ''.join([tag_title.string for tag_title in aa[i].find_all('strong')]).replace(" ", "").replace(
+                    "：", "").replace("\r\n", "").replace("\r", "").replace("\n", "").strip()
+            except Exception as e:
+                print(e)
+            try:
+                # print(len(aa[i].find_all('span')))
+                # print(''.join([tag_content.text for tag_content in aa[i].select("td > span") if tag_content.text != None]).replace(" ", "").replace("\r\n", "").replace("\r", "").replace("\n", "").strip())
+                content = ''.join([tag_content.text for tag_content in aa[i].select("td > span") if
+                                   tag_content.text != None]).replace(" ", "").replace("\r\n", "").replace("\r",
+                                                                                                           "").replace(
+                    "\n", "").strip()
+            except Exception as e:
+                print(e)
+
+            try:
+                list_notice_info.append([stock_code, stock_name, dat, title, content])
+            except Exception as e:
+                print(e)
+
+        df_notice_info_sub = pd.DataFrame(list_notice_info, columns=['code', 'name', 'dat', 'title', 'content'])
+        # print(df_notice_info_sub)
+        df_notice_info = df_notice_info.append(df_notice_info_sub)
+        # print(df_notice_info)
+        # except Exception as e:
+        #         print(e)
+        # try:
+        table_name = 'stock_notice_info'
+        print("==============")
+        # print(df_notice_info)
+        if is_init == True:
+            df_notice_info.to_sql(table_name, engine, if_exists='append', index=False)
+        else:
+            dml_sql = "delete from akshare.{0} where dat>='{1}' and code = '{2}'".format(table_name,
+                                                                                         datetime.datetime.now().strftime(
+                                                                                             '%Y-%m-%d'), stock_code)
+            dml_mysql(dml_sql)
+            df_notice_info = df_notice_info[df_notice_info['dat'] >= datetime.datetime.now().strftime('%Y-%m-%d')]
+            df_notice_info.to_sql(table_name, engine, if_exists='append', index=False)
+        del r, soup, aa, dat, title, content, list_notice_info, df_notice_info_sub
+        gc.collect()
+    except Exception as e:
+        print(e)
+
+def get_stock_notice_info(is_init):
+
+    sql = " select distinct code ,name from akshare.history_trade_day_qfq htdq  where 日期 >= DATE_SUB(CURDATE(), INTERVAL 10 day)"
+    df_stock = pd.read_sql_query(sql, engine)
+    # print(df_stock)
+    if is_init == True:
+        try:
+            dml_sql = "truncate table akshare.{0} ".format("stock_notice_info")
+            dml_mysql(dml_sql)
+        except Exception as e:
+            print(e)
+    pool = Pool(processes=10)
+    starttime = time.time()
+    for stock_num in range(len(df_stock)):
+    #     time.sleep(1)
+    #     print(stock_num)
+        stock_code = df_stock["code"][stock_num]
+        stock_name = df_stock["name"][stock_num]
+        # get_stock_notice_info_subtask(is_init, stock_code, stock_name)
+        pool.apply_async(get_stock_notice_info_subtask, (is_init, stock_code, stock_name,))
+    pool.close()
+    # pool.join()
+    dtime = time.time() - starttime
+    print("Time_elapsed_all : {0}min".format(str(int(dtime)/60)))
+    print("开始时间：", starttime)
+    print("当前时间：", time.time())
 
 
 
@@ -1038,25 +945,283 @@ def schedule_yj_season():
     try:
         get_yjbb_season()
         get_yjkb_season()
+        print("INFO: 获取季度业绩报成功。")
     except Exception as e:
         print(e)
+        print("ERROR: 获取季度业绩报失败！？？？")
     logging.info("time : %s",str(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))))
 
 
 # df = ts.pro_bar(ts_code='600723.SZ', adj='qfq', start_date='20211018', end_date='20211018')
 # print(df)
 
+def get_limit_up_stock(dat):
+    stock_em_zt_pool_df = ak.stock_em_zt_pool(date=dat)
+    print(stock_em_zt_pool_df)
+    table_name = 'limit_up_stock_pool'
+    stock_em_zt_pool_df['dat'] = dat
+    stock_em_zt_pool_df = stock_em_zt_pool_df.drop_duplicates()
+    stock_em_zt_pool_df.to_sql(table_name, engine, if_exists='append',index= False)
+
+
+
+@scheduler.scheduled_job('cron', hour='15', minute='5', coalesce=False, misfire_grace_time=60, max_instances=20)
+def get_limitup():
+    try:
+        sql = " select * from akshare.trade_date_hist_sina tdhs where trade_date <= DATE_SUB(CURDATE(), INTERVAL 0 day) order by trade_date desc limit 1"
+        # sql = " select * from akshare.trade_date_hist_sina tdhs where trade_date <= DATE_SUB(CURDATE(), INTERVAL 164 day) order by trade_date desc limit 133"
+        df_trade_date = pd.read_sql_query(sql, engine)
+        list_trade_date = df_trade_date['trade_date'].tolist()
+        for dat in list_trade_date:
+            time.sleep(5)
+            get_limit_up_stock(str(dat).replace("-", ""))
+        print("INFO: 获取每日涨停板成功。")
+    except Exception as e:
+        print(e)
+        print("ERROR: 获取每日涨停板失败！？？？")
+
+@scheduler.scheduled_job('cron', hour='4,8,11,13,15,17,20', minute='1', coalesce=False, misfire_grace_time=60, max_instances=20)
+def get_notice_info():
+    try:
+        get_stock_notice_info(is_init=False)
+        print("INFO: 获取每日公告信息成功。")
+    except Exception as e:
+        print(e)
+        print("ERROR: 获取每日公告信息失败！？？？")
+
+def get_dragon_tiger_info(dat):
+    time.sleep(3)
+    # url1 = f'http://data.10jqka.com.cn/market/longhu/'
+    url1 = 'http://data.10jqka.com.cn/ifmarket/lhbggxq/report/{0}/'.format(dat)
+    # url1 = f'http://data.10jqka.com.cn/ifmarket/lhbggxq/report/2022-02-15/'
+    headers = {
+        'User-Agent': ua_random()
+    }
+    t = requests.get(url1, headers=headers)
+    soup = BeautifulSoup(t.text, "lxml")
+    # 历史交易日
+    code_lhb_details = soup.select('body > div.ggmx.clearfix > div.rightcol.fr > div')
+    # 最近一个交易日
+    # code_lhb_details = soup.select('#ggmx > div.ggmxcont > div.ggmx.clearfix > div.rightcol.fr > div')
+    # 最终路径
+    # body > div.ggmx.clearfix > div.rightcol.fr > div:nth-child(1) > div.cell-cont.cjmx > table:nth-child(2) > tbody > tr:nth-child(3) > td.tl.rel > a
+    # 最近一个交易日
+    #ggmx > div.ggmxcont > div.ggmx.clearfix > div.rightcol.fr > div:nth-child(5) > div.cell-cont.cjmx > table:nth-child(2) > tbody > tr:nth-child(5) > td.tl.rel > a
+    array_lhb = []
+    array_lhb_detail = []
+    for num, item_code in enumerate(code_lhb_details):
+        try:
+            item_list = (item_code.text).split("\n")
+            print(item_list, "-------------",len(item_list))
+            if num == len(code_lhb_details) - 1:
+                break
+
+            print("===================================", num)
+            # print(item_list)
+            # for i,item in enumerate(item_list):
+            #     print(i,": ", item)
+            name = item_list[1][:item_list[1].find('(') ]
+            code = item_list[1][item_list[1].find('(') + 1:item_list[1].find(')')]
+            reason = item_list[1][item_list[1].find('：') + 1:]
+            reason_type = '3' if "连续三个" in reason else '1'
+            # 以下金额单位转换为亿元
+            amount = item_list[8][item_list[8].find('：') + 1:]
+            amount = round(float(amount.replace("亿元", "").replace(" ", "")), 3) if "亿" in amount else round(float(amount.replace("万元", "").replace(" ", ""))/10000, 3)
+            amount_buy = item_list[9][item_list[9].find('：') + 1:]
+            amount_buy = round(float(amount_buy.replace("亿元", "").replace(" ", "")), 3) if "亿" in amount_buy else round(float(amount_buy.replace("万元", "").replace(" ", ""))/10000, 3)
+            amount_sell = item_list[10][item_list[10].find('：') + 1:]
+            amount_sell = round(float(amount_sell.replace("亿元", "").replace(" ", "")), 3) if "亿" in amount_sell else round(float(amount_sell.replace("万元", "").replace(" ", ""))/10000, 3)
+            amount_net = item_list[11][item_list[11].find('：') + 1:]
+            amount_net = round(float(amount_net.replace("亿元", "").replace(" ", "")), 3) if "亿" in amount_net else round(float(amount_net.replace("万元", "").replace(" ", ""))/10000, 3)
+
+            buy_top5name1 = item_list[25].replace(" ", "")
+            buy_top5name1_nick = item_list[26].replace(" ", "")
+            buy_top5name1_in = item_list[27].replace(" ", "")
+            buy_top5name1_out = item_list[28].replace(" ", "")
+            buy_top5name1_net = item_list[29].replace(" ", "")
+
+            buy_top5name2 = item_list[33].replace(" ", "")
+            buy_top5name2_nick = item_list[34].replace(" ", "")
+            buy_top5name2_in = item_list[35].replace(" ", "")
+            buy_top5name2_out = item_list[36].replace(" ", "")
+            buy_top5name2_net = item_list[37].replace(" ", "")
+
+            buy_top5name3 = item_list[41].replace(" ", "")
+            buy_top5name3_nick = item_list[42].replace(" ", "")
+            buy_top5name3_in = item_list[43].replace(" ", "")
+            buy_top5name3_out = item_list[44].replace(" ", "")
+            buy_top5name3_net = item_list[45].replace(" ", "")
+
+            buy_top5name4 = item_list[49].replace(" ", "")
+            buy_top5name4_nick = item_list[50].replace(" ", "")
+            buy_top5name4_in = item_list[51].replace(" ", "")
+            buy_top5name4_out = item_list[52].replace(" ", "")
+            buy_top5name4_net = item_list[53].replace(" ", "")
+
+            buy_top5name5 = item_list[57].replace(" ", "")
+            buy_top5name5_nick = item_list[58].replace(" ", "")
+            buy_top5name5_in = item_list[59].replace(" ", "")
+            buy_top5name5_out = item_list[60].replace(" ", "")
+            buy_top5name5_net = item_list[61].replace(" ", "")
+
+            sell_top5name1 = item_list[77].replace(" ", "")
+            sell_top5name1_nick = item_list[78].replace(" ", "")
+            sell_top5name1_in = item_list[79].replace(" ", "")
+            sell_top5name1_out = item_list[80].replace(" ", "")
+            sell_top5name1_net = item_list[81].replace(" ", "")
+
+            sell_top5name2 = item_list[85].replace(" ", "")
+            sell_top5name2_nick = item_list[86].replace(" ", "")
+            sell_top5name2_in = item_list[87].replace(" ", "")
+            sell_top5name2_out = item_list[88].replace(" ", "")
+            sell_top5name2_net = item_list[89].replace(" ", "")
+
+            sell_top5name3 = item_list[93].replace(" ", "")
+            sell_top5name3_nick = item_list[94].replace(" ", "")
+            sell_top5name3_in = item_list[95].replace(" ", "")
+            sell_top5name3_out = item_list[96].replace(" ", "")
+            sell_top5name3_net = item_list[97].replace(" ", "")
+
+            sell_top5name4 = item_list[101].replace(" ", "")
+            sell_top5name4_nick = item_list[102].replace(" ", "")
+            sell_top5name4_in = item_list[103].replace(" ", "")
+            sell_top5name4_out = item_list[104].replace(" ", "")
+            sell_top5name4_net = item_list[105].replace(" ", "")
+
+            sell_top5name5 = item_list[109].replace(" ", "")
+            sell_top5name5_nick = item_list[110].replace(" ", "")
+            sell_top5name5_in = item_list[111].replace(" ", "")
+            sell_top5name5_out = item_list[112].replace(" ", "")
+            sell_top5name5_net = item_list[113].replace(" ", "")
+
+            print(dat, name, code, reason, reason_type, amount, amount_buy, amount_sell, amount_net)
+
+            array_lhb.append([dat, name, code, reason, reason_type, amount, amount_buy, amount_sell, amount_net])
+
+
+            print(buy_top5name1, buy_top5name1_nick, buy_top5name1_in, buy_top5name1_out, buy_top5name1_net, buy_top5name2, buy_top5name2_nick, buy_top5name2_in, buy_top5name2_out, buy_top5name2_net, buy_top5name3, buy_top5name3_nick, buy_top5name3_in, buy_top5name3_out, buy_top5name3_net, buy_top5name4, buy_top5name4_nick, buy_top5name4_in, buy_top5name4_out, buy_top5name4_net, buy_top5name5, buy_top5name5_nick, buy_top5name5_in, buy_top5name5_out, buy_top5name5_net, sell_top5name1, sell_top5name1_nick, sell_top5name1_in, sell_top5name1_out, sell_top5name1_net, sell_top5name2, sell_top5name2_nick, sell_top5name2_in, sell_top5name2_out, sell_top5name2_net, sell_top5name3, sell_top5name3_nick, sell_top5name3_in, sell_top5name3_out, sell_top5name3_net, sell_top5name4, sell_top5name4_nick, sell_top5name4_in, sell_top5name4_out, sell_top5name4_net, sell_top5name5, sell_top5name5_nick, sell_top5name5_in, sell_top5name5_out, sell_top5name5_net)
+
+            array_lhb_detail.append([dat, name, code, reason, reason_type, amount, amount_buy, amount_sell, amount_net, buy_top5name1, buy_top5name1_nick, buy_top5name1_in, buy_top5name1_out, buy_top5name1_net, "buy", 1])
+            array_lhb_detail.append([dat, name, code, reason, reason_type, amount, amount_buy, amount_sell, amount_net, buy_top5name2, buy_top5name2_nick, buy_top5name2_in, buy_top5name2_out, buy_top5name2_net, "buy", 2])
+            array_lhb_detail.append([dat, name, code, reason, reason_type, amount, amount_buy, amount_sell, amount_net, buy_top5name3, buy_top5name3_nick, buy_top5name3_in, buy_top5name3_out, buy_top5name3_net, "buy", 3])
+            array_lhb_detail.append([dat, name, code, reason, reason_type, amount, amount_buy, amount_sell, amount_net, buy_top5name4, buy_top5name4_nick, buy_top5name4_in, buy_top5name4_out, buy_top5name4_net, "buy", 4])
+            array_lhb_detail.append([dat, name, code, reason, reason_type, amount, amount_buy, amount_sell, amount_net, buy_top5name5, buy_top5name5_nick, buy_top5name5_in, buy_top5name5_out, buy_top5name5_net, "buy", 5])
+
+            array_lhb_detail.append([dat, name, code, reason, reason_type, amount, amount_buy, amount_sell, amount_net, sell_top5name1, sell_top5name1_nick, sell_top5name1_in, sell_top5name1_out, sell_top5name1_net, "sell", 1])
+            array_lhb_detail.append([dat, name, code, reason, reason_type, amount, amount_buy, amount_sell, amount_net, sell_top5name2, sell_top5name2_nick, sell_top5name2_in, sell_top5name2_out, sell_top5name2_net, "sell", 2])
+            array_lhb_detail.append([dat, name, code, reason, reason_type, amount, amount_buy, amount_sell, amount_net, sell_top5name3, sell_top5name3_nick, sell_top5name3_in, sell_top5name3_out, sell_top5name3_net, "sell", 3])
+            array_lhb_detail.append([dat, name, code, reason, reason_type, amount, amount_buy, amount_sell, amount_net, sell_top5name4, sell_top5name4_nick, sell_top5name4_in, sell_top5name4_out, sell_top5name4_net, "sell", 4])
+            array_lhb_detail.append([dat, name, code, reason, reason_type, amount, amount_buy, amount_sell, amount_net, sell_top5name5, sell_top5name5_nick, sell_top5name5_in, sell_top5name5_out, sell_top5name5_net, "sell", 5])
+        except Exception as e:
+            print(e)
+            continue
+
+    # print(array_lhb)
+    df_lhb = pd.DataFrame(array_lhb, columns=['dat', 'name', 'code', 'reason', 'reason_type', 'amount', 'amount_buy', 'amount_sell', 'amount_net'])
+    df_lhb_detail = pd.DataFrame(array_lhb_detail, columns=['dat', 'name', 'code', 'reason', 'reason_type', 'amount', 'amount_buy', 'amount_sell', 'amount_net', 'top5name', 'top5name_nick', 'top5name_in', 'top5name_out', 'top5name_net', 'type', 'rank1'])
+
+    table_name1 = "dragon_tiger_info"
+    # print(table_name1)
+    # print(dat)
+    df_lhb.to_sql(table_name1, engine, if_exists='append', index=False)
+    table_name2 = "dragon_tiger_info_detail"
+    df_lhb_detail.to_sql(table_name2, engine, if_exists='append', index=False)
+
+
+@scheduler.scheduled_job('cron', hour='16,17', minute='1', coalesce=False, misfire_grace_time=60, max_instances=20)
+def get_dragon_tiger_info_task(is_init=True):
+    if is_init == True:
+        dml_sql1 = "truncate table akshare.{0} ".format("dragon_tiger_info")
+        dml_mysql(dml_sql1)
+        dml_sql2 = "truncate table akshare.{0} ".format("dragon_tiger_info_detail")
+        dml_mysql(dml_sql2)
+        sql_dat = "select * from akshare.trade_date_hist_sina tdhs where trade_date <= DATE_SUB(CURDATE(), INTERVAL 0 day) order by trade_date desc limit 120"
+        df_dat = pd.read_sql_query(sql_dat, engine)
+        list_dat = df_dat["trade_date"].tolist()
+        pool = Pool(processes=10)
+        for dat in list_dat:
+            pool.apply_async(get_dragon_tiger_info, (dat,))
+        pool.close()
+        pool.join()
+    else:
+        sql_dat = "select * from akshare.trade_date_hist_sina tdhs where trade_date <= DATE_SUB(CURDATE(), INTERVAL 0 day) order by trade_date desc limit 1"
+        df_dat = pd.read_sql_query(sql_dat, engine)
+        list_dat = df_dat["trade_date"].tolist()
+        for dat in list_dat:
+            get_dragon_tiger_info(dat)
+
+
+# 文本类型消息
+def send_txt(text, send_url = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=ee09cff2-5e7e-4421-b91e-4af3645670f5"):
+    headers = {"Content-Type": "text/plain"}
+    #测试企业微信
+    send_data = {
+        "msgtype": "text",  # 消息类型
+        "text": {
+            "content": "{0}".format(text), # 文本内容，最长不超过2048个字节，必须是utf8编码
+            "mentioned_list": [""],        # userid的列表，提醒群中的指定成员(@某个成员)，@all表示提醒所有人，如果开发者获取不到userid，可以使用mentioned_mobile_list
+            "mentioned_mobile_list": [""]  # 手机号列表，提醒手机号对应的群成员(@某个成员)，@all表示提醒所有人
+        }
+    }
+
+    res = requests.post(url=send_url, headers=headers, json=send_data)
+    print(res.text)
+
+@scheduler.scheduled_job('cron', hour='7', coalesce=False, misfire_grace_time=60, max_instances=20)
+def send_topic():
+    text = '''业绩快报净利润同比增长超过500%的昨日新增股票：\r\n'''
+    # sql = '''select 股票简称 as name from akshare.yjkb_season ys where date(dat) = LAST_DAY(MAKEDATE(EXTRACT(YEAR FROM CURDATE()),1) + interval QUARTER(CURDATE())*3-4 month) and `净利润-同比增长` >= 500 order by 公告日期 desc '''
+    # sql = '''select 股票简称 as name from akshare.yjkb_season ys where date(dat) = LAST_DAY(MAKEDATE(EXTRACT(YEAR FROM CURDATE()),1) + interval QUARTER(CURDATE())*3-4 month) and `净利润-同比增长` >= 500 and date(公告日期 ) =  date_sub(CURRENT_DATE(), INTERVAL 1 day)  '''
+    sql = '''select 股票简称 as name from akshare.yjkb_season ys where `净利润-同比增长` >= 500 and date(公告日期 ) =  date_sub(CURRENT_DATE(), INTERVAL 1 day) 
+union ALL 
+select 股票简称 from akshare.yjbb_season ys where  `净利润-同比增长` >= 500 and date(最新公告日期 ) =  date_sub(CURRENT_DATE(), INTERVAL 1 day) '''
+    df_stock_name = pd.read_sql_query(sql, engine)
+    text =  text + ("\r\n".join(df_stock_name['name'].tolist()))
+    print(text)
+
+    send_txt(text, 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=ee09cff2-5e7e-4421-b91e-4af3645670f5')
+
+@scheduler.scheduled_job('cron', hour='1', coalesce=False, misfire_grace_time=60, max_instances=20)
+def get_jgcc_gdrs_xsjj_info():
+    try:
+        get_jgcc_gdrs_xsjj()
+        print("INFO: 获取每日机构持仓、股东人数、限售解禁成功。")
+    except Exception as e:
+        print(e)
+        print("ERROR: 获取每日机构持仓、股东人数、限售解禁失败！？？？")
+
+@scheduler.scheduled_job('cron', hour='1', coalesce=False, misfire_grace_time=60, max_instances=20)
+def get_jygc_jyps_ywfw_info():
+    try:
+        get_jygc_jyps_ywfw()
+        print("INFO: 获取每日经营构成、经营评述、业务范围信息成功。")
+    except Exception as e:
+        print(e)
+        print("ERROR: 获取每日经营构成、经营评述、业务范围信息失败！？？？")
+
+
 if __name__ == '__main__':
     print("开始运行：")
     # scheduler.start()
+    # schedule_get_trade_date_hist_sina()
+    # get_ths_board_concept_stock()
+    # get_notice_info()
+    # send_topic()
+    # get_ths_board_concept_stock()
+    # get_stock_notice_info(is_init=True)
+    # get_ths_board_concept_name()
+    # get_ths_board_concept_stock()
     # get_important_stock()
-    get_stock_zh_a_hist_batch(True)
-    get_yjbb_season()
-    get_yjkb_season()
-    get_half_day_fund_flow()
-    get_half_day_fund_flow_concept()
-    get_half_day_fund_flow_industry()
-    schedule_get_ths_board_concept()
+    # get_stock_baseinfo()
+    get_limitup()
+    # get_stock_zh_a_hist_batch(False)
+    # get_limitup()
+    # get_yjbb_season(True)
+    # get_yjkb_season(True)
+    # get_half_day_fund_flow()
+    # get_half_day_fund_flow_concept()
+    # get_half_day_fund_flow_industry()
+    # schedule_get_ths_board_concept()
     # get_ths_board_concept_name()
     # today = str(datetime.date.today()).replace('-','')
     # print(today)
@@ -1073,39 +1238,41 @@ if __name__ == '__main__':
     # print()
     # print(stock_em_ggcg_df[(stock_em_ggcg_df['代码'] == '300792') ])
     # get_stock_baseinfo()
+    # tool_trade_date_hist_sina_df = ak.tool_trade_date_hist_sina()
+    # print(tool_trade_date_hist_sina_df)
+    #
+    # table_name = 'trade_date_hist_sina'
 
-# import requests
-# from bs4 import BeautifulSoup
-
-# def stock_board_concept_name_ths() -> pd.DataFrame:
-#     """
-#     http://emweb.eastmoney.com/BusinessAnalysis/Index?type=web&code=SZ301072#zyfw-0
-#     :return: 
-#     :rtype: pandas.DataFrame
-#     """
-#     headers = {
-#         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
-#     }
-#     url = 'http://basic.10jqka.com.cn/301077/operate.html#stockpage'
-#     r = requests.get(url, headers=headers)
-#     print(r.text)
-
-#     soup = BeautifulSoup(r.text, "lxml")
-#     aa = soup.select('div > div > ul > li > span')
-#     print(aa)    
-#     print(soup.find('div', attrs={'class': 'bd'}))
-#     # html_list = soup.find('th', attrs={'class': 'tips'})#.find_all('td', attrs={'class': 'tips-dataL'})
-#     # print(html_list)
-#     # name_list = [item.text for item in html_list]
-#     # url_list = [item['href'] for item in html_list]
-#     # temp_df = pd.DataFrame([name_list, url_list], index=['name', 'url']).T
-#     # return temp_df
+    # tool_trade_date_hist_sina_df.to_sql(table_name, engine, if_exists='replace',index= False)
 
 
-# stock_board_concept_name_ths()
+    # stock_em_zt_pool_df = ak.stock_em_zt_pool(date='20211216')
+    # print(stock_em_zt_pool_df)
+    # print(stock_em_zt_pool_df.sort_values(by=['连板数', '总市值']))
+    # stock_em_zt_pool_df['new'] = stock_em_zt_pool_df['代码'] + '  ' + stock_em_zt_pool_df['名称'] + '  ' + stock_em_zt_pool_df['所属行业']
+    # print(stock_em_zt_pool_df)
+    # print('\r\n'.join(stock_em_zt_pool_df['new'].tolist()))
+
+
+    # sql = " select * from akshare.trade_date_hist_sina tdhs where trade_date <= DATE_SUB(CURDATE(), INTERVAL 0 day) order by trade_date desc limit 1"
+    # sql = " select * from akshare.trade_date_hist_sina tdhs where trade_date < DATE_SUB(CURDATE(), INTERVAL 1 day) order by trade_date desc limit 33"
+    # df_trade_date = pd.read_sql_query(sql, engine)
+    # list_trade_date = df_trade_date['trade_date'].tolist()
+    # for dat in list_trade_date:
+    #     time.sleep(5)
+    #     try:
+    #         get_limit_up_stock(str(dat).replace("-", ""))
+    #     except Exception:
+    #         print("aaa")
+    #         continue
+
+    # stock_em_zt_pool_zbgc_df = ak.stock_em_zt_pool_zbgc(date='20220106')
+    # print(stock_em_zt_pool_zbgc_df)
 
 
 
+    # get_stock_notice_info(is_init = True)
+    # get_notice_info()
 
 
 

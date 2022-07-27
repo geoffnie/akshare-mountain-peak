@@ -10,7 +10,16 @@ import pandas as pd
 import time
 import requests
 import json
+
+
+# host = 'yunfuwu01'
+host = '127.0.0.1'
+user = 'root'
+passwd = 'akpq92nieqingoo*rootNQ'
+port = '3306'
+db = 'akshare'
 def ua_random():
+    import random
     '''
     随机获取一个user-agent
     :return: user-agent
@@ -275,7 +284,7 @@ def xsjj_analysis(
 
 #工具类，删除数据
 def dml_mysql(sql):
-    conn = pymysql.connect(host='yunfuwu01', port=3306, user='root', passwd='root', db='akshare')
+    conn = pymysql.connect(host=host, port=3306, user=user, passwd=passwd, db=db)
     cursor = conn.cursor()
     cursor.execute(sql)
     conn.commit()
@@ -285,7 +294,7 @@ import pymysql
 from sqlalchemy import create_engine
 from apscheduler.schedulers.blocking import BlockingScheduler
 scheduler = BlockingScheduler() 
-engine = create_engine('mysql+pymysql://root:root@yunfuwu01/akshare?charset=utf8',
+engine = create_engine('mysql+pymysql://{0}:{1}@{2}:{3}/{4}?charset=utf8'.format(user, passwd, host, port, db),
                        encoding='utf-8',
                        echo=False,
                        pool_pre_ping=True,
@@ -298,91 +307,110 @@ engine = create_engine('mysql+pymysql://root:root@yunfuwu01/akshare?charset=utf8
 #     print(b)
 #     print(c)
 
-sql = 'select distinct name, concat(substring(ts_code, 8, 2), substring(ts_code, 1, 6)) as code from akshare.stock_baseinfo'
-#获取查询数据
-df = pd.read_sql_query(sql, engine)
-# dml_mysql("truncate table akshare.stock_bussiness_analysis_zyfw")
-# dml_mysql("truncate table akshare.stock_bussiness_analysis_jyps")
-# dml_mysql("truncate table akshare.stock_bussiness_analysis_zygcfx")
-
-for i,index in enumerate(df.index):
-    print(i, df['code'][index], df['name'][index])
-    print("------------------------------------------")
+#获取机构持仓、股东人数、限售解禁
+def get_jgcc_gdrs_xsjj():
+    sql = 'select distinct name, concat(substring(ts_code, 8, 2), substring(ts_code, 1, 6)) as code from akshare.stock_baseinfo'
+    #获取查询数据
+    df = pd.read_sql_query(sql, engine)
     try:
-        jgcc_df = jgcc_analysis("{0}".format(df['code'][index]), '2021-09-30')
-        table_name = 'stockholder_jgcc'
-        #插入数据
-        jgcc_df.to_sql(table_name, engine, if_exists='append',index= False)
-
-        print()
-        print()
-        gdrs_df = gdrs_analysis("{0}".format(df['code'][index]))
-        table_name = 'stockholder_gdrs'
-        #插入数据
-        gdrs_df.to_sql(table_name, engine, if_exists='append',index= False)
-
-        print()
-        print()
-        xsjj_df = xsjj_analysis("{0}".format(df['code'][index]))
-        table_name = 'stockholder_xsjj'
-        #插入数据
-        xsjj_df.to_sql(table_name, engine, if_exists='append',index= False)
+        dml_mysql("truncate table akshare.stockholder_jgcc")
+        dml_mysql("truncate table akshare.stockholder_gdrs")
+        dml_mysql("truncate table akshare.stockholder_xsjj")
     except Exception as e:
         print(e)
-        continue
+
+    for i,index in enumerate(df.index):
+        print(i, df['code'][index], df['name'][index])
+        print("------------------------------------------")
+        try:
+            jgcc_df = jgcc_analysis("{0}".format(df['code'][index]), '2021-09-30')
+            table_name = 'stockholder_jgcc'
+            #插入数据
+            jgcc_df.to_sql(table_name, engine, if_exists='append',index= False)
+
+            print()
+            print()
+            gdrs_df = gdrs_analysis("{0}".format(df['code'][index]))
+            table_name = 'stockholder_gdrs'
+            #插入数据
+            gdrs_df.to_sql(table_name, engine, if_exists='append',index= False)
+
+            print()
+            print()
+            xsjj_df = xsjj_analysis("{0}".format(df['code'][index]))
+            table_name = 'stockholder_xsjj'
+            #插入数据
+            xsjj_df.to_sql(table_name, engine, if_exists='append',index= False)
+            print("====================================")
+        except Exception as e:
+            print(e)
+            continue
 
 
-# #获取经营构成、经营评述、业务范围信息
-#
-# sql = 'select distinct name, concat(substring(ts_code, 8, 2), substring(ts_code, 1, 6)) as code from akshare.stock_baseinfo'
-# #获取查询数据
-# df = pd.read_sql_query(sql, engine)
-# dml_mysql("truncate table akshare.stock_bussiness_analysis_zyfw")
-# dml_mysql("truncate table akshare.stock_bussiness_analysis_jyps")
-# dml_mysql("truncate table akshare.stock_bussiness_analysis_zygcfx")
-#
-# for i,index in enumerate(df.index):
-#     print(i)
-#     print(i, df['code'][index], df['name'][index])
-#     # time.sleep(5)
-#     print("--------------------------")
-#     try:
-#         temp_zyfw_df, temp_jyps_df, temp_zygcfx_df = stock_bussiness_analysis("{0}".format(df['code'][index]))
-#         temp_zyfw_df['dat'] = '{0}'.format(time.strftime('%Y%m%d', time.localtime(time.time())))
-#         # temp_zyfw_df['code'] = df['code'][index]
-#         temp_zyfw_df['name'] = df['name'][index]
-#         table_name = 'stock_bussiness_analysis_zyfw'
-#         #插入数据
-#         temp_zyfw_df.to_sql(table_name, engine, if_exists='append',index= False)
-#
-#         temp_jyps_df['dat'] = '{0}'.format(time.strftime('%Y%m%d', time.localtime(time.time())))
-#         # temp_jyps_df['code'] = df['code'][index]
-#         temp_jyps_df['name'] = df['name'][index]
-#         table_name = 'stock_bussiness_analysis_jyps'
-#         #插入数据
-#         temp_jyps_df.to_sql(table_name, engine, if_exists='append',index= False)
-#
-#         temp_zygcfx_df['dat'] = '{0}'.format(time.strftime('%Y%m%d', time.localtime(time.time())))
-#         # temp_zygcfx_df['code'] = df['code'][index]
-#         temp_zygcfx_df['name'] = df['name'][index]
-#         table_name = 'stock_bussiness_analysis_zygcfx'
-#         #插入数据
-#         temp_zygcfx_df.to_sql(table_name, engine, if_exists='append',index= False)
-#     except Exception as e:
-#         print(e)
-#         continue
+#获取经营构成、经营评述、业务范围信息
+def get_jygc_jyps_ywfw():
+    sql = 'select distinct name, concat(substring(ts_code, 8, 2), substring(ts_code, 1, 6)) as code from akshare.stock_baseinfo'
+    #获取查询数据
+    df = pd.read_sql_query(sql, engine)
+    try:
+        dml_mysql("truncate table akshare.stock_bussiness_analysis_zyfw")
+        dml_mysql("truncate table akshare.stock_bussiness_analysis_jyps")
+        dml_mysql("truncate table akshare.stock_bussiness_analysis_zygcfx")
+    except Exception as e:
+        print(e)
+
+    for i,index in enumerate(df.index):
+        print(i)
+        print(i, df['code'][index], df['name'][index])
+        # time.sleep(5)
+        print("--------------------------")
+        try:
+            temp_zyfw_df, temp_jyps_df, temp_zygcfx_df = stock_bussiness_analysis("{0}".format(df['code'][index]))
+            temp_zyfw_df['dat'] = '{0}'.format(time.strftime('%Y%m%d', time.localtime(time.time())))
+            # temp_zyfw_df['code'] = df['code'][index]
+            temp_zyfw_df['name'] = df['name'][index]
+            table_name = 'stock_bussiness_analysis_zyfw'
+            #插入数据
+            temp_zyfw_df.to_sql(table_name, engine, if_exists='append',index= False)
+
+            temp_jyps_df['dat'] = '{0}'.format(time.strftime('%Y%m%d', time.localtime(time.time())))
+            # temp_jyps_df['code'] = df['code'][index]
+            temp_jyps_df['name'] = df['name'][index]
+            table_name = 'stock_bussiness_analysis_jyps'
+            #插入数据
+            temp_jyps_df.to_sql(table_name, engine, if_exists='append',index= False)
+
+            temp_zygcfx_df['dat'] = '{0}'.format(time.strftime('%Y%m%d', time.localtime(time.time())))
+            # temp_zygcfx_df['code'] = df['code'][index]
+            temp_zygcfx_df['name'] = df['name'][index]
+            table_name = 'stock_bussiness_analysis_zygcfx'
+            #插入数据
+            temp_zygcfx_df.to_sql(table_name, engine, if_exists='append',index= False)
+        except Exception as e:
+            print(e)
+            continue
 
 
 
+get_jgcc_gdrs_xsjj()
+get_jygc_jyps_ywfw()
 
 
 
+# ==========================================================================
+# 同花顺个股近期大事
+# http://basic.10jqka.com.cn/300506/event.html#stockpage
+# Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3
+# Accept-Encoding: gzip, deflate
+# Accept-Language: zh-CN,zh;q=0.9
+# Cache-Control: max-age=0
+# Connection: keep-alive
+# Cookie: searchGuide=sg; reviewJump=nojump; Hm_lvt_78c58f01938e4d85eaf619eae71b4ed1=1640652749; spversion=20130314; historystock=300506%7C*%7C603787; cid=311dcd4148b1d66ef393be03f4895e6c1640652794; usersurvey=1; Hm_lpvt_78c58f01938e4d85eaf619eae71b4ed1=1640653127; v=A2un8X2fjni1G9KsqQHzxeYx-oRWgH8Z-ZRDtt3oR6oBfIV4ZVAPUglk0xzu
+# Host: basic.10jqka.com.cn
+# Upgrade-Insecure-Requests: 1
+# User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36
 
-
-
-
-
-
+# ===========================================================================
 
 
 

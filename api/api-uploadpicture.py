@@ -30,7 +30,7 @@ def allowed_file(filename):
 
 # 上传图片
 @app.route("/upload_image", methods=['POST', "GET"])
-def uploads():
+def upload():
     if request.method == 'POST':
         # 获取post过来的文件名称，从name=file参数中获取
         file = request.files['file']

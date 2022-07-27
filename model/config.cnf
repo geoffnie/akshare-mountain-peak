@@ -1,0 +1,13 @@
+[mysql]
+username = 'root'
+password = 'Jiuxin2120@nm'
+host = '172.18.4.34'
+db = 'amdb'
+[druid]
+druid_host = '172.18.4.218'
+druid_port = 8082 
+#druid_host = '124.70.188.197'
+#druid_port = 8888 
+
+
+
